@@ -7,11 +7,11 @@
 #
 
 shopt -s lastpipe
-RED="\e[91m"
-GREEN="\e[92m"
-BOLD="\e[1m"
-RESET="\e[0m"
-BLUE="\e[94m"
+RED="\033[0;91m"
+GREEN="\033[0;92m"
+BOLD="\033[0;1m"
+RESET="\033[0;0m"
+BLUE="\033[0;94m"
 fill="                                                     "
 # Default solver path. You can change it if you need
 analyzer_path=$1
