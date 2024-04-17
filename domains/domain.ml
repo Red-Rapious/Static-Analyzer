@@ -21,7 +21,7 @@ end
   (for instance: a map from variable to their bounds).
  *)
 
-module type DOMAIN = functor (_:VALUE_DOMAIN) ->
+module type DOMAIN = functor (_:VALUE_DOMAIN) -> (* functor as suggested by the subject *)
   sig
 
     (* type of abstract elements *)
@@ -190,12 +190,6 @@ struct
     (* constant true and random can both evaluate to true *)
     | _ -> domain
  
-    (* widening *)
-    let widen: t -> t -> t = failwith "unimplemented"
- 
-    (* narrowing *)
-    let narrow: t -> t -> t = failwith "unimplemented"
- 
     (* whether an abstract element is included in another one *)
     let subset dom1 dom2 =
       VarMap.fold 
@@ -203,6 +197,20 @@ struct
         if VarMap.mem var dom2 then (ValueDomain.subset value (VarMap.find var dom2)) && is_subset
         else false
       ) dom1 true
+
+    (* widening *)
+    let widen dom1 dom2 =
+      if subset dom1 dom2 then
+        (* apply pointwise ValueDomain.widen to the join *)
+        VarMap.mapi (
+            fun var _ ->
+              let value = match VarMap.find_opt var dom1 with | Some x -> x | None -> ValueDomain.bottom in
+              ValueDomain.widen value (VarMap.find var dom2)
+        ) (join dom1 dom2)
+      else dom1
+ 
+    (* narrowing *)
+    let narrow: t -> t -> t = failwith "unimplemented"
 
     (* prints *)
     let print formatter domain = 
