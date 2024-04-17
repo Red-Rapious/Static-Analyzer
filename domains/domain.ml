@@ -201,7 +201,7 @@ struct
       else dom1 (* TODO: or dom2? idk *)
  
     (* narrowing *)
-    let narrow: t -> t -> t = failwith "unimplemented"
+    let narrow dom1 dom2 = failwith "domain.narrow: unimplemented"
 
     (* prints *)
     let print formatter domain = 

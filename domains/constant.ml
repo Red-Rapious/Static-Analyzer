@@ -129,7 +129,7 @@ struct
   let widen x y = y (* TODO: or x? idk *)
 
   (* narrowing *)
-  let narrow: t -> t -> t = failwith "unimplemented"
+  let narrow x y = failwith "constant.narrow: unimplemented"
 
   (* subset inclusion of concretizations *)
   let subset x y = match x, y with
