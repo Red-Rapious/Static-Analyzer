@@ -6,7 +6,6 @@
 
 open Frontend
 open Frontend.Abstract_syntax_tree
-open Domain
 open Cfg
 open Value_domain
 
@@ -207,7 +206,7 @@ struct
               let value = match VarMap.find_opt var dom1 with | Some x -> x | None -> ValueDomain.bottom in
               ValueDomain.widen value (VarMap.find var dom2)
         ) (join dom1 dom2)
-      else dom1
+      else dom1 (* TODO: or dom2? idk *)
  
     (* narrowing *)
     let narrow: t -> t -> t = failwith "unimplemented"

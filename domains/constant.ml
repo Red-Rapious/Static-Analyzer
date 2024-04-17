@@ -5,8 +5,11 @@ open Frontend.Abstract_syntax_tree
 module ConstantDomain : VALUE_DOMAIN = 
 struct 
   (* type of abstract elements *)
-  (* an element of type t abstracts a set of integers *)
-  type t = | Top | Bot | Int of Z.t
+  (** an element of type t abstracts a set of integers *)
+  type t = 
+  | Top 
+  | Bot 
+  | Int of Z.t
 
   (* unrestricted value: [-oo,+oo] *)
   let top = Top
@@ -19,40 +22,96 @@ struct
 
   (* interval: [a,b] *)
   let rand a b = 
-    if a < b then Top (* big abstraction *)
+    if      a < b then Top (* big abstraction *)
     else if a > b then Bot (* empty set *)
-    else Int a (* singleton *)
+    else               Int a (* singleton *)
 
   (* unary operation *)
-  let unary value = function
-  | AST_UNARY_PLUS -> value
-  | AST_UNARY_MINUS -> match value with 
-                       | Top | Bot -> value
-                       | Int c -> Int (Z.neg c)
+  let unary x = function
+  | AST_UNARY_PLUS -> x
+  | AST_UNARY_MINUS -> match x with 
+                       | Top | Bot -> x
+                       | Int x -> Int (Z.neg x)
 
-  (* binary operation *)
-  let binary: t -> t -> int_binary_op -> t = failwith "unimplemented"
+  (** binary operation *)
+  let rec binary x y op = match x, y, op with 
+  | Bot, _, _ -> Bot
+  | _, Bot, _ -> Bot
+  | _, Top, _ -> binary x y op
+  (* the only case where <Top op t2> can have a definite value is when t2 = 0 *)
+  | Top, Int(z), AST_MULTIPLY when z = Z.zero -> Int(Z.zero)
+  | Top, _, _ -> Top
+  (* division by zero *)
+  | _, Int(z), AST_DIVIDE when z = Z.zero -> Bot
+  | _, Int(z), AST_MODULO when z = Z.zero -> Bot
+  (* basic cases *)
+  | Int(a), Int(b), _ -> 
+    let f = match op with
+    | AST_PLUS     -> Z.(+)
+    | AST_MINUS    -> Z.(-)
+    | AST_MULTIPLY -> Z.( * )
+    | AST_DIVIDE   -> Z.(/)
+    | AST_MODULO   -> Z.(mod)
+    in Int(f a b)
 
+  (* set-theoretic operations *)
+  let join x y = match x, y with 
+  | Top, _ | _, Top -> Top
+  | Bot, _ -> y
+  | _, Bot -> x
+  | Int(x), Int(y) when x = y -> Int(x)
+  | Int(_), Int(_) -> Top
 
+  let meet x y = match x, y with
+  | Top, _ -> y
+  | _, Top -> x
+  | Bot, _ | _, Bot -> Bot
+  | Int(x), Int(y) when x = y -> Int(x)
+  | Int(_), Int(_) -> Bot
+
+    
   (* comparison *)
-  (* [compare x y op] returns (x',y') where
+  (** [compare x y op] returns (x',y') where
       - x' abstracts the set of v  in x such that v op v' is true for some v' in y
       - y' abstracts the set of v' in y such that v op v' is true for some v  in x
       i.e., we filter the abstract values x and y knowing that the test is true
 
       a safe, but not precise implementation, would be:
       compare x y op = (x,y)
-    *)
-  let compare: t -> t -> compare_op -> (t * t) = failwith "unimplemented"
+  *)
+  let compare x y = function
+  | AST_EQUAL -> let j = join x y in (j, j)
+  | AST_NOT_EQUAL -> begin match x, y with
+                           | Top, Top -> (Top, Top)
+                           | Bot, _ | _, Bot -> (Bot, Bot)
+                           (* the best safe approximation of [-oo,+oo]\{i} that we have is [-oo,+oo], hence Top *)
+                           | Top, Int(_) | Int(_), Top -> (x, y)
+                           (* exactly what we don't want *)
+                           | Int(x'), Int(y') when x' != y' -> (x, y)
+                           | Int(_), Int(_) -> (Bot, Bot)
+                     end
+  | op -> let [@warning "-8"] comp = match op with 
+                                     | AST_LESS -> Z.lt
+                                     | AST_LESS_EQUAL -> Z.leq
+                                     | AST_GREATER -> Z.gt
+                                     | AST_GREATER_EQUAL -> Z.geq
+    in begin match x, y with 
+             | Top, Top -> (Top, Top)
+             | Bot, _ | _, Bot -> (Bot, Bot)
+             (* the best safe approximation of [i, +oo] and [-oo, i] that we have is [-oo,+oo], hence Top *)
+             | Top, Int(_) | Int(_), Top -> (x, y)
+             | Int(x'), Int(y') when comp x' y' -> (x, y)
+             | Int(_), Int(_) -> (Bot, Bot)
+       end
 
 
   (* backards unary operation *)
-  (* [bwd_unary x op r] return x':
+  (** [bwd_unary x op r] return x':
       - x' abstracts the set of v in x such as op v is in r
-      i.e., we fiter the abstract values x knowing the result r of applying
+      i.e., we filter the abstract values x knowing the result r of applying
       the operation on x
     *)
-  let bwd_unary: t -> int_unary_op -> t -> t = failwith "unimplemented"
+  let bwd_unary x op r = failwith ""
 
     (* backward binary operation *)
     (* [bwd_binary x y op r] returns (x',y') where
@@ -64,22 +123,28 @@ struct
   let bwd_binary: t -> t -> int_binary_op -> t -> (t * t) = failwith "unimplemented"
 
 
-  (* set-theoretic operations *)
-  let join: t -> t -> t = failwith "unimplemented"
-  let meet: t -> t -> t = failwith "unimplemented"
-
   (* widening *)
-  let widen: t -> t -> t = failwith "unimplemented"
+  let widen a b = b (* TODO: or a? idk *)
 
   (* narrowing *)
   let narrow: t -> t -> t = failwith "unimplemented"
 
   (* subset inclusion of concretizations *)
-  let subset: t -> t -> bool = failwith "unimplemented"
+  let subset a b = match a, b with
+  | Bot, _ -> true
+  | _, Top -> true
+  | Int(a), Int(b) when a = b -> true
+  | _ -> false
 
   (* check the emptiness of the concretization *)
-  let is_bottom: t -> bool = failwith "unimplemented"
+  let is_bottom t = t = Bot
 
   (* print abstract element *)
-  let print: Format.formatter -> t -> unit = failwith "unimplemented"
+  let print formatter t =
+    Format.fprintf formatter "%s" begin
+      match t with
+      | Top    -> ""
+      | Bot    -> ""
+      | Int(i) -> Z.to_string i
+    end
 end
