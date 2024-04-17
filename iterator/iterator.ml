@@ -22,4 +22,5 @@ let iterate cfg =
   List.iter iter_arc cfg.cfg_arcs;
   Format.printf "Node Values:@   @[<v 0>";
   List.iter iter_node cfg.cfg_nodes;
-  Format.printf "@]"
+  Format.printf "@]" ;
+  Cfg_printer.print_cfg Format.std_formatter cfg

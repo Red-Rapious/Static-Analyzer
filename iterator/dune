@@ -2,3 +2,4 @@
   (name iterator)
   (libraries zarith menhirLib frontend domains))
 
+(env (dev (flags (:standard -warn-error -A))))

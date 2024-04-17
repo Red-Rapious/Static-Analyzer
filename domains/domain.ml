@@ -6,6 +6,7 @@
 
 open Frontend
 open! Cfg
+open Value_domain
 
 (* Signature for the variables *)
 
@@ -18,7 +19,7 @@ end
   (for instance: a map from variable to their bounds).
  *)
 
-module type DOMAIN =
+module type DOMAIN = functor (_:VALUE_DOMAIN) ->
   sig
 
     (* type of abstract elements *)
@@ -61,4 +62,3 @@ module type DOMAIN =
     val print: Format.formatter -> t -> unit
 
   end
-
