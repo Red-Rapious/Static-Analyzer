@@ -42,6 +42,10 @@ type int_unary_op =
   | AST_UNARY_PLUS     (* +e *)
   | AST_UNARY_MINUS    (* -e *)
 
+let ast_uop_inv = function
+| AST_UNARY_PLUS -> AST_UNARY_MINUS
+| AST_UNARY_MINUS -> AST_UNARY_PLUS
+
 type bool_unary_op =
   | AST_NOT            (* !e logical negation *)
 
@@ -55,6 +59,13 @@ type int_binary_op =
   | AST_DIVIDE        (* e / e *)
   | AST_MODULO        (* e % e *)
 
+let ast_bop_inv = function
+| AST_PLUS -> AST_MINUS
+| AST_MINUS -> AST_PLUS
+| AST_MULTIPLY -> AST_DIVIDE
+| AST_DIVIDE -> AST_MULTIPLY
+| AST_MODULO -> failwith "cannot invert modulo operation: return TOP instead"
+
 type compare_op =
   | AST_EQUAL         (* e == e *)
   | AST_NOT_EQUAL     (* e != e *)
@@ -62,6 +73,14 @@ type compare_op =
   | AST_LESS_EQUAL    (* e <= e *)
   | AST_GREATER       (* e > e *)
   | AST_GREATER_EQUAL (* e >= e *)
+
+let ast_cop_not = function
+| AST_EQUAL         -> AST_NOT_EQUAL
+| AST_NOT_EQUAL     -> AST_EQUAL
+| AST_LESS          -> AST_GREATER_EQUAL
+| AST_LESS_EQUAL    -> AST_GREATER
+| AST_GREATER       -> AST_LESS_EQUAL
+| AST_GREATER_EQUAL -> AST_LESS
 
 type bool_binary_op =
   | AST_AND           (* e && e *)

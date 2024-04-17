@@ -110,30 +110,32 @@ struct
       - x' abstracts the set of v in x such as op v is in r
       i.e., we filter the abstract values x knowing the result r of applying
       the operation on x
-    *)
-  let bwd_unary x op r = failwith ""
+  *)
+  let bwd_unary x op r = meet x (unary r (ast_uop_inv op))
 
-    (* backward binary operation *)
-    (* [bwd_binary x y op r] returns (x',y') where
-      - x' abstracts the set of v  in x such that v op v' is in r for some v' in y
-      - y' abstracts the set of v' in y such that v op v' is in r for some v  in x
-      i.e., we filter the abstract values x and y knowing that, after
-      applying the operation op, the result is in r
-    *)
-  let bwd_binary: t -> t -> int_binary_op -> t -> (t * t) = failwith "unimplemented"
+  (* backward binary operation *)
+  (** [bwd_binary x y op r] returns (x',y') where
+    - x' abstracts the set of v  in x such that v op v' is in r for some v' in y
+    - y' abstracts the set of v' in y such that v op v' is in r for some v  in x
+    i.e., we filter the abstract values x and y knowing that, after
+    applying the operation op, the result is in r
+  *)
+  let bwd_binary x y op r = match op with 
+  | AST_MODULO -> (x, y) (* meet x Top = x, and we can't invert modulo so we abstract the invert as Top *)
+  | _ -> (meet x (binary r y (ast_bop_inv op)), meet y (binary r x (ast_bop_inv op)))
 
 
   (* widening *)
-  let widen a b = b (* TODO: or a? idk *)
+  let widen x y = y (* TODO: or x? idk *)
 
   (* narrowing *)
   let narrow: t -> t -> t = failwith "unimplemented"
 
   (* subset inclusion of concretizations *)
-  let subset a b = match a, b with
+  let subset x y = match x, y with
   | Bot, _ -> true
   | _, Top -> true
-  | Int(a), Int(b) when a = b -> true
+  | Int(x'), Int(y') when x' = y' -> true
   | _ -> false
 
   (* check the emptiness of the concretization *)
@@ -143,8 +145,8 @@ struct
   let print formatter t =
     Format.fprintf formatter "%s" begin
       match t with
-      | Top    -> ""
-      | Bot    -> ""
+      | Top    -> "⊤"
+      | Bot    -> "⊥"
       | Int(i) -> Z.to_string i
     end
 end

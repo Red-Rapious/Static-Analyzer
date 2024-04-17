@@ -132,18 +132,10 @@ struct
         bottom
       else
         VarMap.add var meet_value domain
- 
-    let ast_op_not = function
-    | AST_EQUAL         -> AST_NOT_EQUAL
-    | AST_NOT_EQUAL     -> AST_EQUAL
-    | AST_LESS          -> AST_GREATER_EQUAL
-    | AST_LESS_EQUAL    -> AST_GREATER
-    | AST_GREATER       -> AST_LESS_EQUAL
-    | AST_GREATER_EQUAL -> AST_LESS
         
     let rec cfg_not = function
     (* simply switch the operator *)
-    | CFG_compare(op, e1, e2) -> CFG_compare(ast_op_not op, e1, e2)
+    | CFG_compare(op, e1, e2) -> CFG_compare(ast_cop_not op, e1, e2)
     | CFG_bool_unary(AST_NOT, b) -> b
     (* the negation of a value that can evaluate to both true and false can evaluate to both false and true *)
     | CFG_bool_rand -> CFG_bool_rand
