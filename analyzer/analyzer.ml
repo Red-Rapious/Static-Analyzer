@@ -11,6 +11,8 @@
 *)
 
 open Frontend
+open Domains.Constant
+open Domains.Domain
 
 (* parse filename *)
 let doit filename =
@@ -19,7 +21,15 @@ let doit filename =
   if !Options.verbose then
     Format.printf "%a" Cfg_printer.print_cfg cfg;
   Cfg_printer.output_dot !Options.cfg_out cfg;
-  Iterator.iterate cfg
+
+  let module Vars : Domains.Domain.VARS = struct
+    let support = cfg.cfg_vars
+  end in
+  match !Options.domain with
+  | "constant" -> 
+    let module I = Iterator.Iterator(Domain(Vars))(ConstantDomain) in
+    I.iterate cfg
+  | _ -> failwith "The provided domain argument does not exist."
 
 
 (* parses arguments to get filename *)
