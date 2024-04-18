@@ -104,8 +104,7 @@ struct
     List.iter visit_node entries ;
 
     let environment = Hashtbl.create 0 in 
-    let main_func = List.find (fun f -> f.func_name = "main") cfg.cfg_funcs in 
-
+    let main_func = List.find (fun f -> f.func_name = "main") cfg.cfg_funcs in
     iterate_function environment main_func None D.init |> ignore
 
     (*

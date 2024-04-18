@@ -122,7 +122,10 @@ module type DOMAIN = functor (_:VALUE_DOMAIN) -> (* functor as suggested by the 
       bwd domain e2 final2
     (* similar to constant but instead we look for the value of the variable *)
     | CFG_int_var(var) ->
-      let value = VarMap.find var domain in
+      let value = match VarMap.find_opt var domain with 
+                  | Some x -> x 
+                  | None -> ValueDomain.bottom (* TODO: this is a temporary fix, I suppose? *)
+      in 
       let meet_value = (ValueDomain.meet value final) in
       if ValueDomain.is_bottom meet_value then bottom
       else VarMap.add var meet_value domain
