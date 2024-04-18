@@ -64,15 +64,14 @@ module type DOMAIN = functor (_:VALUE_DOMAIN) -> (* functor as suggested by the 
 
   end
 
-module VarMap = Map.Make(Var)
-
-module Domain(Vars:VARS) : DOMAIN = functor (ValueDomain:VALUE_DOMAIN) ->
-struct 
+  
+  module Domain(Vars:VARS) : DOMAIN = functor (ValueDomain:VALUE_DOMAIN) ->
+  struct 
     (* type of abstract elements *)
     (* an element of type t abstracts a set of mappings from variables
        to integers
      *)
-     type t = ValueDomain.t VarMap.t
+    type t = ValueDomain.t VarMap.t
 
     (* initial environment, with all variables initialized to 0 *)
     let init =

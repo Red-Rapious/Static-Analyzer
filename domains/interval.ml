@@ -253,11 +253,10 @@ struct
 
     (* widening *)
     let widen x y =
-      if not (subset x y) then x
-      else match x, y with
+      match x, y with
            | Top, _ | _, Top -> Top
-           | Bot, _ -> x
-           | _, Bot -> Bot
+           | Bot, _ -> y
+           | _, Bot -> x
            | Interval(a, b), Interval(c, d) -> Interval((if gt_bound c a then a else MinusInf), 
                                                         (if gt_bound b d then b else PlusInf))
 

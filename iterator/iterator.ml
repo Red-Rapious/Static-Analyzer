@@ -97,7 +97,6 @@ struct
 
     let entries = List.map (fun f -> f.func_entry) cfg.cfg_funcs in
     List.iter visit_node entries ;
-    Hashtbl.iter (fun node () -> Format.printf "node %d added to widen_next\n" node.node_id) widen_next ;
 
     let environment = Hashtbl.create 0 in 
     let main_func = List.find (fun f -> f.func_name = "main") cfg.cfg_funcs in 
