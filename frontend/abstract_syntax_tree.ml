@@ -42,6 +42,7 @@ type int_unary_op =
   | AST_UNARY_PLUS     (* +e *)
   | AST_UNARY_MINUS    (* -e *)
 
+(** returns the invert of an unary operator, i.e. + becomes - and - becomes + *)
 let ast_uop_inv = function
 | AST_UNARY_PLUS -> AST_UNARY_MINUS
 | AST_UNARY_MINUS -> AST_UNARY_PLUS
@@ -59,6 +60,7 @@ type int_binary_op =
   | AST_DIVIDE        (* e / e *)
   | AST_MODULO        (* e % e *)
 
+(** returns the invert of a binary operator, i.e. * becomes /, etc. *)
 let ast_bop_inv = function
 | AST_PLUS -> AST_MINUS
 | AST_MINUS -> AST_PLUS
@@ -74,6 +76,7 @@ type compare_op =
   | AST_GREATER       (* e > e *)
   | AST_GREATER_EQUAL (* e >= e *)
 
+(** returns the invert of a comparaison operator, i.e. < becomes >=, etc. *)
 let ast_cop_not = function
 | AST_EQUAL         -> AST_NOT_EQUAL
 | AST_NOT_EQUAL     -> AST_EQUAL

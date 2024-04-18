@@ -12,6 +12,7 @@
 
 open Frontend
 open Domains.Constant
+open Domains.Interval
 open Domains.Domain
 
 (* parse filename *)
@@ -29,6 +30,10 @@ let doit filename =
   | "constant" -> 
     let module I = Iterator.Iterator(Domain(Vars))(ConstantDomain) in
     Format.eprintf "Starting iterator using constant domain...\n" ;
+    I.iterate cfg
+  | "interval" -> 
+    let module I = Iterator.Iterator(Domain(Vars))(IntervalDomain) in
+    Format.eprintf "Starting iterator using interval domain...\n" ;
     I.iterate cfg
   | _ -> failwith "The provided domain argument does not exist."
 

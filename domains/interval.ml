@@ -4,13 +4,18 @@ open Frontend.Abstract_syntax_tree
 
 let swap (x, y) = (y, x)
 
+(* a custom type representing the bound of an interval *)
 type bound = | MinusInf | Finite of Z.t | PlusInf
 
+(* -- the following implements diverse operations over bounds -- *)
+
+(** returns the opposite of a bound *)
 let neg_bound = function
 | MinusInf -> PlusInf
 | Finite b -> Finite (Z.neg b)
 | PlusInf -> MinusInf
 
+(** adds two bounds *)
 let add_bound x y =
   (* 
     note that by construction it is impossible to have +oo + -oo
@@ -22,6 +27,7 @@ let add_bound x y =
   | PlusInf, _ | _, PlusInf -> PlusInf
   | Finite x', Finite y' -> Finite (Z.add x' y')
 
+(** substracts two bounds *)
 let sub_bound x y =
   (*
     similarly, it is impossible to have (+oo) - (-oo) for the same reasons
@@ -31,6 +37,7 @@ let sub_bound x y =
   | PlusInf, _ | _, MinusInf -> PlusInf
   | Finite x', Finite y' -> Finite (Z.sub x' y')
 
+(** multiplies two bounds *)
 let rec mul_bound x y =
   match x, y with
   | MinusInf, PlusInf -> MinusInf
@@ -43,6 +50,7 @@ let rec mul_bound x y =
   | Finite(x'), Finite(y') -> Finite (Z.mul x' y')
   | _, _ -> mul_bound y x
 
+(** divides two bounds *)
 let [@warning "-8"] rec div_bound x y =
   match x, y with
   | _, (PlusInf|MinusInf) -> Finite Z.zero
@@ -53,6 +61,7 @@ let [@warning "-8"] rec div_bound x y =
   | MinusInf, Finite(z) when Z.lt z Z.zero -> PlusInf
   | Finite(x'), Finite(y') -> Finite (Z.div x' y')
 
+(** takes the minimum of two bounds*)
 let min_bound x y =
   match x, y with
   | MinusInf, _ | _, MinusInf -> MinusInf
@@ -60,6 +69,7 @@ let min_bound x y =
   | PlusInf, _ -> y
   | Finite(x'), Finite(y') -> Finite(Z.min x' y')
 
+(** takes the maximum of two bounds *)
 let max_bound x y =
   match x, y with
   | PlusInf, _ | _, PlusInf -> PlusInf
@@ -67,6 +77,7 @@ let max_bound x y =
   | MinusInf, _ -> y
   | Finite(x'), Finite(y') -> Finite(Z.max x' y')
 
+(** check whether x >= y *)
 let geq_bound x y =
   match x, y with
   | PlusInf, _ -> true
@@ -76,6 +87,7 @@ let geq_bound x y =
   | Finite(_), PlusInf -> false
   | Finite(_), MinusInf -> true
 
+(** check whether x > y *)
 let gt_bound x y =
   match x, y with
   | PlusInf, PlusInf -> false
@@ -84,6 +96,12 @@ let gt_bound x y =
   | Finite(x'), Finite(y') -> Z.gt x' y'
   | Finite(_), PlusInf -> false
   | Finite(_), MinusInf -> true
+
+let bound_to_string = function
+| MinusInf -> "-oo"
+| Finite a -> Z.to_string a
+| PlusInf -> "+oo"
+
 
 module IntervalDomain : VALUE_DOMAIN = 
 struct 
@@ -197,19 +215,20 @@ struct
        i.e., we fiter the abstract values x knowing the result r of applying
        the operation on x
      *)
-    let bwd_unary: t -> int_unary_op -> t -> t = failwith "unimplemented"
+    let bwd_unary x op r = meet x (unary r (ast_uop_inv op))
 
-     (* backward binary operation *)
-     (* [bwd_binary x y op r] returns (x',y') where
-       - x' abstracts the set of v  in x such that v op v' is in r for some v' in y
-       - y' abstracts the set of v' in y such that v op v' is in r for some v  in x
-       i.e., we filter the abstract values x and y knowing that, after
-       applying the operation op, the result is in r
-      *)
-    let bwd_binary: t -> t -> int_binary_op -> t -> (t * t) = failwith "unimplemented"
+    (* backward binary operation *)
+    (* [bwd_binary x y op r] returns (x',y') where
+      - x' abstracts the set of v  in x such that v op v' is in r for some v' in y
+      - y' abstracts the set of v' in y such that v op v' is in r for some v  in x
+      i.e., we filter the abstract values x and y knowing that, after
+      applying the operation op, the result is in r
+    *)
+    let bwd_binary x y op r = match op with 
+    | AST_MODULO -> (x, y) (* meet x Top = x, and we can't invert modulo so we abstract the invert as Top *)
+    | _ -> (meet x (binary r y (ast_bop_inv op)), meet y (binary r x (ast_bop_inv op)))
 
 
-    (* set-theoretic operations *)
     let join x y =
       match x, y with
       | Top, _ | _, Top -> Top
@@ -220,18 +239,40 @@ struct
                                           in if lb = MinusInf && rb = PlusInf then Top
                                              else Interval(lb, rb)
 
-    (* widening *)
-    let widen: t -> t -> t = failwith "unimplemented"
-
     (* narrowing *)
-    let narrow: t -> t -> t = failwith "unimplemented"
+    let narrow x y = failwith "unimplemented"
 
     (* subset inclusion of concretizations *)
-    let subset: t -> t -> bool = failwith "unimplemented"
+    let subset x y =
+      match x, y with
+      | _, Top -> true
+      | Top, _ -> false
+      | Bot, _ -> true
+      | _, Bot -> false
+      | Interval(a, b), Interval(c, d) -> geq_bound a c && geq_bound d b
+
+    (* widening *)
+    let widen x y =
+      if not (subset x y) then x
+      else match x, y with
+           | Top, _ | _, Top -> Top
+           | Bot, _ -> x
+           | _, Bot -> Bot
+           | Interval(a, b), Interval(c, d) -> Interval((if gt_bound c a then a else MinusInf), 
+                                                        (if gt_bound b d then b else PlusInf))
 
     (* check the emptiness of the concretization *)
-    let is_bottom: t -> bool = failwith "unimplemented"
+    let is_bottom = function
+    | Bot -> true
+    (* if everything goes well, this case is never used, but who knows... *)
+    | Interval(a, b) when a > b -> 
+      Format.eprintf "[warning] interval.is_bottom: an interval with incorrect bounds has been detected\n" ;
+      true
+    | _ -> false
 
     (* print abstract element *)
-    let print: Format.formatter -> t -> unit = failwith "unimplemented"
+    let print formatter = function
+    | Top -> Format.fprintf formatter "⊤"
+    | Bot -> Format.fprintf formatter "⊥"
+    | Interval(a, b) -> Format.fprintf formatter "[%s, %s]" (bound_to_string a) (bound_to_string b)
 end
