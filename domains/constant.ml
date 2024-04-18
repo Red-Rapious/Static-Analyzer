@@ -22,8 +22,8 @@ struct
 
   (* interval: [a,b] *)
   let rand a b = 
-    if      a < b then Top (* big abstraction *)
-    else if a > b then Bot (* empty set *)
+    if      a < b then Top   (* big abstraction *)
+    else if a > b then Bot   (* empty set *)
     else               Int a (* singleton *)
 
   (* unary operation *)
@@ -37,13 +37,13 @@ struct
   let rec binary x y op = match x, y, op with 
   | Bot, _, _ -> Bot
   | _, Bot, _ -> Bot
-  | _, Top, _ -> binary x y op
-  (* the only case where <Top op t2> can have a definite value is when t2 = 0 *)
+  (* the only case where <Top op t2> can have a definite value is when t2 = 0 and op = AST_MULTIPLY *)
   | Top, Int(z), AST_MULTIPLY when z = Z.zero -> Int(Z.zero)
   | Top, _, _ -> Top
   (* division by zero *)
   | _, Int(z), AST_DIVIDE when z = Z.zero -> Bot
   | _, Int(z), AST_MODULO when z = Z.zero -> Bot
+  | _, Top, _ -> binary x y op
   (* basic cases *)
   | Int(a), Int(b), _ -> 
     let f = match op with
@@ -66,7 +66,7 @@ struct
   | Top, _ -> y
   | _, Top -> x
   | Bot, _ | _, Bot -> Bot
-  | Int(x), Int(y) when x = y -> Int(x)
+  | Int(x'), Int(y') when x' = y' -> x
   | Int(_), Int(_) -> Bot
 
     
@@ -80,7 +80,13 @@ struct
       compare x y op = (x,y)
   *)
   let compare x y = function
-  | AST_EQUAL -> let j = join x y in (j, j)
+  | AST_EQUAL -> begin match x, y with
+                       | Bot, _ | _, Bot -> (Bot, Bot)
+                       | Int a, Int b when not (Z.equal a b) ->  (Bot, Bot)
+                       | Int _, _ -> (x, x)
+                       | _, Int _ -> (y, y)
+                       | Top, Top -> (Top, Top)
+                 end
   | AST_NOT_EQUAL -> begin match x, y with
                            | Top, Top -> (Top, Top)
                            | Bot, _ | _, Bot -> (Bot, Bot)
