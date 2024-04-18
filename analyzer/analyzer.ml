@@ -15,6 +15,10 @@ open Domains.Constant
 open Domains.Interval
 open Domains.Domain
 
+let log fmt = 
+  if !Options.verbose then Format.fprintf Format.err_formatter fmt
+  else Format.fprintf Format.str_formatter fmt
+
 (* parse filename *)
 let doit filename =
   let prog = File_parser.parse_file filename in
@@ -26,23 +30,25 @@ let doit filename =
   let module Vars : Domains.Domain.VARS = struct
     let support = cfg.cfg_vars
   end in
-  match !Options.domain with
-  | "constant" -> 
+  begin match !Options.domain with
+  | "constants" -> 
     let module I = Iterator.Iterator(Domain(Vars))(ConstantDomain) in
-    Format.eprintf "Starting iterator using constant domain...\n" ;
+    log "Starting iterator using constant domain...@." ;
     I.iterate cfg
   | "interval" -> 
     let module I = Iterator.Iterator(Domain(Vars))(IntervalDomain) in
-    Format.eprintf "Starting iterator using interval domain...\n" ;
+    log "Starting iterator using interval domain...@." ;
     I.iterate cfg
   | _ -> failwith "The provided domain argument does not exist."
+  end ;
+  log "End of static analyzer.@."
 
 
 (* parses arguments to get filename *)
 let main () =
   let _ = Options.init () in
-  Format.eprintf "\n\nStarting static analyzer...\n" ;
-  Format.eprintf " -> Domain: %s\n" !Options.domain ;
+  log "\n\nStarting static analyzer...\n" ;
+  log " -> Domain: %s\n" !Options.domain ;
   doit !Options.file
 
 let _ = main ()

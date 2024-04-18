@@ -33,17 +33,29 @@ struct
     | None -> D.bottom
     | Some d -> d
 
-  let iter_arc environment arc : D.t =
+  let rec iter_arc environment arc : D.t =
     let domain = environment_of_node environment arc.arc_src
     in
     match arc.arc_inst with
     | CFG_skip _ -> domain
-    | _ -> failwith "unsupported"
+    | CFG_assign (var, expr) -> D.assign domain var expr
+    | CFG_guard expr -> D.guard domain expr
+    | CFG_call func -> iterate_function environment func None domain
+    | CFG_assert (expr, extent) -> 
+      let true_domain = D.guard domain expr 
+      and false_domain = D.guard domain (CFG_bool_unary (AST_NOT, expr))
+      in
 
+      if not (D.is_bottom true_domain) then begin
+        (* TODO: clean error handling *)
+        Format.printf "%a: %s \"%a\"@." Cfg_printer.pp_pos (fst extent) "Assertion failure" Cfg_printer.print_bool_expr expr
+      end ; 
+      true_domain
   (*
     [environment] maintains a map from nodes to abstract values
   *)
-  let iterate_function environment (func:func) (entry_node:node option) entry_domain =
+  and iterate_function environment (func:func) (entry_node:node option) entry_domain =
+    (* TODO: replace node option by node; to do so, change calls using None to calls using func.func_entry *)
     let entry = match entry_node with
                 | Some x -> x
                 | None -> func.func_entry in
