@@ -8,37 +8,90 @@ open Frontend
 open Cfg
 open Domains.Domain
 open Domains.Value_domain
-open Hashtbl
 
 type state = NotVisited | Visited
 
 module Iterator(D:DOMAIN) = functor (ValueDomain:VALUE_DOMAIN) ->
 struct
-  let to_widen = Hashtbl.create 0
+  module D = D(ValueDomain)
+  let widen_next = Hashtbl.create 0
   let states = Hashtbl.create 0
-  let rec iter_arc arc =
-    let nei = arc.arc_dst in
-    match Hashtbl.find_opt states nei with
-    | Some NotVisited -> Hashtbl.add to_widen nei ()
+  let rec visit_arc arc =
+    let destination = arc.arc_dst in
+    match Hashtbl.find_opt states destination with
+    | None -> visit_node destination
+    | Some NotVisited -> Hashtbl.add widen_next destination ()
     | Some Visited -> ()
-    | None -> iter_node nei
   
-  and iter_node node : unit =
-    Hashtbl.add states node NotVisited;
-    List.iter iter_arc node.node_out;
+  and visit_node node : unit =
+    Hashtbl.add states node NotVisited ;
+    List.iter visit_arc node.node_out ;
     Hashtbl.add states node Visited
+
+  let environment_of_node environment node =
+    match Hashtbl.find_opt environment node with
+    | None -> D.bottom
+    | Some d -> d
+
+  let iter_arc environment arc : D.t =
+    let domain = environment_of_node environment arc.arc_src
+    in
+    match arc.arc_inst with
+    | CFG_skip _ -> domain
+    | _ -> failwith "unsupported"
+
+  (*
+    [environment] maintains a map from nodes to abstract values
+  *)
+  let iterate_function environment (func:func) (entry_node:node option) entry_domain =
+    let entry = match entry_node with
+                | Some x -> x
+                | None -> func.func_entry in
+    let children = List.map (fun arc -> arc.arc_dst) entry.node_out in
+
+    (* the set of nodes to update *)
+    let worklist = ref (NodeSet.of_list children) in
+    Hashtbl.add environment entry entry_domain ;
+
+    (* the algorithm is finished when there is no more node in the worklist *)
+    while not (NodeSet.is_empty !worklist) do 
+      (* at each step, a node is extracted from the worklist and updated *)
+      let node = NodeSet.choose !worklist in 
+      worklist := NodeSet.remove node !worklist ;
+
+      let sources = List.filter (fun arc -> Hashtbl.mem environment (arc.arc_src)) node.node_in in 
+      let sources_domains = List.map (fun arc -> iter_arc environment arc) sources in 
+      let join_domain = List.fold_left D.join D.bottom sources_domains in
+      
+      (* if the node’s abstract value has changed *)
+      if Hashtbl.mem environment node |> not && join_domain <> environment_of_node environment node then begin
+        let widen_if_necessary = if Hashtbl.mem widen_next node 
+                                    then D.widen (environment_of_node environment node) join_domain
+                                    else join_domain in
+        Hashtbl.add environment node widen_if_necessary ;
+
+        (* putting all the node’s successors into the worklist *)
+        List.iter (fun arc -> worklist := NodeSet.add (arc.arc_dst) !worklist) node.node_out
+      end
+    done ;
+
+    match Hashtbl.find_opt environment func.func_exit with
+    | None -> D.bottom
+    | Some d -> d
 
   let iterate cfg =
     let _ = Random.self_init () in
 
-    List.iter iter_node (List.map (fun f -> f.func_entry) cfg.cfg_funcs);
-    Hashtbl.iter (fun node () -> Format.printf "%d marked\n" node.node_id) to_widen
+    let entries = List.map (fun f -> f.func_entry) cfg.cfg_funcs in
+    List.iter visit_node entries ;
+    Hashtbl.iter (fun node () -> Format.printf "node %d added to widen_next\n" node.node_id) widen_next ;
 
-    (*let iter_arc arc: unit =
-      match arc.arc_inst with
-      | _ -> failwith "TODO"
-    in
+    let environment = Hashtbl.create 0 in 
+    let main_func = List.find (fun f -> f.func_name = "main") cfg.cfg_funcs in 
 
+    iterate_function environment main_func None D.init |> ignore
+
+    (*
     let iter_node node: unit =
       Format.printf "<%i>: ⊤@ " node.node_id
     in
