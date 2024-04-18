@@ -59,7 +59,7 @@ struct
   | Top, _ | _, Top -> Top
   | Bot, _ -> y
   | _, Bot -> x
-  | Int(x), Int(y) when x = y -> Int(x)
+  | Int(x'), Int(y') when x' = y' -> x
   | Int(_), Int(_) -> Top
 
   let meet x y = match x, y with
@@ -126,10 +126,7 @@ struct
 
 
   (* widening *)
-  let widen x y = y (* TODO: or x? idk *)
-
-  (* narrowing *)
-  let narrow x y = failwith "constant.narrow: unimplemented"
+  let widen = join
 
   (* subset inclusion of concretizations *)
   let subset x y = match x, y with
@@ -137,6 +134,9 @@ struct
   | _, Top -> true
   | Int(x'), Int(y') when x' = y' -> true
   | _ -> false
+
+  (* narrowing *)
+  let narrow x y = if subset x y then y else Bot
 
   (* check the emptiness of the concretization *)
   let is_bottom t = t = Bot

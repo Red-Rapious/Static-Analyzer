@@ -74,32 +74,29 @@ struct
      *)
      type t = ValueDomain.t VarMap.t
 
-     (* initial environment, with all variables initialized to 0 *)
-      let init =
-        List.fold_left (fun map var -> VarMap.add var (ValueDomain.const Z.zero) map) VarMap.empty Vars.support
+    (* initial environment, with all variables initialized to 0 *)
+    let init =
+      List.fold_left (fun map var -> VarMap.add var (ValueDomain.const Z.zero) map) VarMap.empty Vars.support
 
- 
-     (* empty set of environments *)
-     let bottom: t = VarMap.empty
+
+    (* empty set of environments *)
+    let bottom: t = VarMap.empty
 
     (* whether the abstract element represents the empty set *)
     let is_bottom: t -> bool = VarMap.is_empty
 
-     let rec int_expr_to_value domain = function
-      | CFG_int_const(i) -> 
-        ValueDomain.const i
-      | CFG_int_unary(op, expr) -> 
-        ValueDomain.unary (int_expr_to_value domain expr) op
-      | CFG_int_binary (op, e1, e2) ->
-        ValueDomain.binary (int_expr_to_value domain e1) (int_expr_to_value domain e2) op
-      | CFG_int_var(var) -> 
-        VarMap.find var domain
-      | CFG_int_rand(i1, i2) -> 
-        ValueDomain.rand i1 i2
+    (* simple conversion function from CFG to abstract domain *)
+    let rec int_expr_to_value domain = function
+    | CFG_int_const(i)            -> ValueDomain.const i
+    | CFG_int_rand(i1, i2)        -> ValueDomain.rand i1 i2
+    | CFG_int_unary(op, expr)     -> ValueDomain.unary  (int_expr_to_value domain expr) op
+    | CFG_int_binary (op, e1, e2) -> ValueDomain.binary (int_expr_to_value domain e1) 
+                                                        (int_expr_to_value domain e2) op
+    | CFG_int_var(var)            -> VarMap.find var domain
  
     (* assign an integer expression to a variable *)
     let assign  domain var int_expr = 
-    VarMap.add var (int_expr_to_value domain int_expr) domain
+      VarMap.add var (int_expr_to_value domain int_expr) domain
 
     (* 
       backward domain analysis:
@@ -110,28 +107,26 @@ struct
     (* if the constant is in the value domain, then nothing changed, otherwise it cannot happen, hence bottom *)
     | CFG_int_const(a) -> if ValueDomain.subset (ValueDomain.const a) final then domain else bottom
     | CFG_int_rand(a, b) ->
-      (* if the meeting of the random domain and the final is bottom, then no possible original domain can achieve this *)
-      if ValueDomain.is_bottom (ValueDomain.meet final (ValueDomain.rand a b)) then
-        bottom
+      (* if the meeting of the random domain and the final is bottom, 
+         then no possible original domain can achieve this *)
+      if ValueDomain.is_bottom (ValueDomain.meet final (ValueDomain.rand a b)) then bottom
       (* otherwise, everything's good *)
-      else
-        domain
+      else domain
     (* propagate *)
     | CFG_int_unary(op, expr) ->
       bwd domain expr (ValueDomain.bwd_unary (int_expr_to_value domain expr) op final )
     (* propagate into the graph *)
     | CFG_int_binary(op, e1, e2) ->
-      let final1, final2  = ValueDomain.bwd_binary (int_expr_to_value domain e1) (int_expr_to_value domain e2) op final in
+      let final1, final2  = ValueDomain.bwd_binary (int_expr_to_value domain e1) 
+                                                   (int_expr_to_value domain e2) op final in
       let domain = bwd domain e1 final1 in
       bwd domain e2 final2
     (* similar to constant but instead we look for the value of the variable *)
     | CFG_int_var(var) ->
       let value = VarMap.find var domain in
       let meet_value = (ValueDomain.meet value final) in
-      if ValueDomain.is_bottom meet_value then
-        bottom
-      else
-        VarMap.add var meet_value domain
+      if ValueDomain.is_bottom meet_value then bottom
+      else VarMap.add var meet_value domain
         
     let rec cfg_not = function
     (* simply switch the operator *)

@@ -51,6 +51,7 @@ struct
         Format.printf "%a: %s \"%a\"@." Cfg_printer.pp_pos (fst extent) "Assertion failure" Cfg_printer.print_bool_expr expr
       end ; 
       true_domain
+  
   (*
     [environment] maintains a map from nodes to abstract values
   *)
