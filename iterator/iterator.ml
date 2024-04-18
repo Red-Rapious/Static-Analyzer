@@ -46,7 +46,7 @@ struct
       and false_domain = D.guard domain (CFG_bool_unary (AST_NOT, expr))
       in
 
-      if not (D.is_bottom true_domain) then begin
+      if not (D.is_bottom false_domain) then begin
         (* TODO: clean error handling *)
         Format.printf "%a: %s \"%a\"@." Cfg_printer.pp_pos (fst extent) "Assertion failure" Cfg_printer.print_bool_expr expr
       end ; 
