@@ -2,6 +2,8 @@ open Frontend
 open Value_domain
 open Frontend.Abstract_syntax_tree
 
+let swap (x, y) = (y, x)
+
 type bound = | MinusInf | Finite of Z.t | PlusInf
 
 let neg_bound = function
@@ -64,6 +66,24 @@ let max_bound x y =
   | _, MinusInf -> x
   | MinusInf, _ -> y
   | Finite(x'), Finite(y') -> Finite(Z.max x' y')
+
+let geq_bound x y =
+  match x, y with
+  | PlusInf, _ -> true
+  | MinusInf, MinusInf -> true (* this case will never be called *)
+  | MinusInf, _ -> false
+  | Finite(x'), Finite(y') -> Z.geq x' y'
+  | Finite(_), PlusInf -> false
+  | Finite(_), MinusInf -> true
+
+let gt_bound x y =
+  match x, y with
+  | PlusInf, PlusInf -> false
+  | PlusInf, _ -> true
+  | MinusInf, _ -> false
+  | Finite(x'), Finite(y') -> Z.gt x' y'
+  | Finite(_), PlusInf -> false
+  | Finite(_), MinusInf -> true
 
 module IntervalDomain : VALUE_DOMAIN = 
 struct 
@@ -141,7 +161,34 @@ struct
        a safe, but not precise implementation, would be:
        compare x y op = (x,y)
      *)
-    let compare: t -> t -> compare_op -> (t * t) = failwith "unimplemented"
+    let rec compare x y = function
+    | AST_EQUAL -> let meeting = meet x y in (meeting, meeting)
+    | AST_NOT_EQUAL -> begin match x, y with
+                             (* we still have no better approximation of [-oo, +oo]\{y} than [-oo, +oo] *)
+                             | Top, _ -> (Top, y)
+                             | _, Top -> (x, Top)
+                             | Bot, _ | _, Bot -> (Bot, Bot)
+                             | Interval(a, b), Interval(c, d) when a = c && b = d -> (Bot, Bot)
+                             | Interval(_, _), Interval(_, _) -> (x, y)
+                       end
+    | AST_LESS -> begin match x, y with
+                        | Top, Top -> (Top, Top)
+                        | Bot, _ | _, Bot -> (Bot, Bot)
+                        | Interval(_, b), Top -> (x, Interval(b, PlusInf))
+                        | Top, Interval(c, _) -> (Interval(MinusInf, c), y)
+                        | Interval(a, b), Interval(c, d) when geq_bound a d -> (Bot, Bot)
+                        (* TODO: substract 1 to bounds since integer *)
+                        | Interval(a, b), Interval(c, d) -> (Interval(a, min_bound b d), Interval(max_bound a c, d))
+                  end
+    | AST_LESS_EQUAL -> begin match x, y with
+                              | Top, Top -> (Top, Top)
+                              | Bot, _ | _, Bot -> (Bot, Bot)
+                              | Interval(_, b), Top -> (x, Interval(b, PlusInf))
+                              | Top, Interval(c, _) -> (Interval(MinusInf, c), y)
+                              | Interval(a, b), Interval(c, d) when gt_bound a d -> (Bot, Bot)
+                              | Interval(a, b), Interval(c, d) -> (Interval(a, min_bound b d), Interval(max_bound a c, d))
+                        end
+    | AST_GREATER | AST_GREATER_EQUAL as op -> swap (compare y x op)
 
 
     (* backards unary operation *)
