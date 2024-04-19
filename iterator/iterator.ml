@@ -50,7 +50,7 @@ struct
         (* TODO: clean error handling *)
         Format.printf "%a: %s \"%a\"@." Cfg_printer.pp_pos (fst extent) "Assertion failure" Cfg_printer.print_bool_expr expr ;
         if !Options.verbose then begin
-          Format.printf "Domain:\n" ;
+          Format.printf "The assertion is false when the value is in the following non-bottom domain:\n" ;
           D.print Format.std_formatter false_domain ; 
           Format.printf "@."
         end

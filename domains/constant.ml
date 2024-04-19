@@ -42,6 +42,7 @@ struct
   | Top, _, _ -> Top
   (* division by zero *)
   | _, Int(z), AST_DIVIDE when z = Z.zero -> Bot
+  (*| _, Top, AST_DIVIDE -> Bot (* division by zero may occur *)*) (* TODO?? *)
   | _, Int(z), AST_MODULO when z = Z.zero -> Bot
   | _, Top, _ -> binary x y op
   (* basic cases *)

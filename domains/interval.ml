@@ -109,6 +109,11 @@ struct
     (* an element of type t abstracts a set of integers *)
     type t  = | Bot | Top | Interval of bound * bound
 
+    (** transforms an interval into Bot if the bounds are incorrect *)
+    let bottomize_if_necessary = function
+    | Interval(x, y) when gt_bound x y -> Bot
+    | x -> x 
+
     (* unrestricted value: [-oo,+oo] *)
     (* note that we could have also chosen to represent Top by Interval(MinusInf, PlusInf) *)
     let top = Top
@@ -136,11 +141,7 @@ struct
       | Bot, _ | _, Bot -> Bot
       | Top, _ -> y
       | _, Top -> x
-      | Interval(a, b), Interval(c, d) -> let lb = max_bound a c
-                                          and rb = min_bound b d 
-                                          in if lb > rb then Bot
-                                             else if lb = MinusInf && rb = PlusInf then Top
-                                             else Interval(lb, rb)
+      | Interval(a, b), Interval(c, d) -> bottomize_if_necessary (Interval(min_bound a c, max_bound b d))
 
     (* binary operation *)
     let binary x y op = 
@@ -198,6 +199,10 @@ struct
                         (* TODO: substract 1 to bounds since integer *)
                         | Interval(a, b), Interval(c, d) -> (Interval(a, min_bound b d), Interval(max_bound a c, d))
                   end
+    (*| AST_LESS -> begin match x, y with
+                        | Interval(a, b), Interval(c, d) -> Interval(a, min_bound b (sub_bound d (Finite Z.one))), Interval(c, max_bound d (add_bound b (Finite Z.one)))
+                        | _ -> (Bot, Bot)
+                  end*)
     | AST_LESS_EQUAL -> begin match x, y with
                               | Top, Top -> (Top, Top)
                               | Bot, _ | _, Bot -> (Bot, Bot)
@@ -206,8 +211,18 @@ struct
                               | Interval(a, b), Interval(c, d) when gt_bound a d -> (Bot, Bot)
                               | Interval(a, b), Interval(c, d) -> (Interval(a, min_bound b d), Interval(max_bound a c, d))
                         end
+    (*| AST_LESS_EQUAL -> begin match x, y with
+                        | Interval(a, b), Interval(c, d) -> Interval(a, min_bound b d), Interval(c, max_bound d b)
+                        | _ -> (Bot, Bot)
+                        end*)
     | AST_GREATER | AST_GREATER_EQUAL as op -> swap (compare y x (if op = AST_GREATER then AST_LESS else AST_LESS_EQUAL))
 
+    (** TODO: used for debugging, check if improves things *)
+    (*let compare x y op = ccompare x y op
+      let res = ccompare x y op in
+      let res = (bottomize_if_necessary (fst res)), (bottomize_if_necessary (snd res)) in
+      let res = if fst res = Bot || snd res = Bot then Bot, Bot else res in
+      res*)
 
     (* backards unary operation *)
     (* [bwd_unary x op r] return x':
