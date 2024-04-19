@@ -34,7 +34,7 @@ struct
                        | Int x -> Int (Z.neg x)
 
   (** binary operation *)
-  let rec binary x y op = match x, y, op with 
+  let binary x y op = match x, y, op with 
   | Bot, _, _ -> Bot
   | _, Bot, _ -> Bot
   (* the only case where <Top op t2> can have a definite value is when t2 = 0 and op = AST_MULTIPLY *)
@@ -44,7 +44,8 @@ struct
   | _, Int(z), AST_DIVIDE when z = Z.zero -> Bot
   (*| _, Top, AST_DIVIDE -> Bot (* division by zero may occur *)*) (* TODO?? *)
   | _, Int(z), AST_MODULO when z = Z.zero -> Bot
-  | _, Top, _ -> binary x y op
+  | Int(z), Top, AST_MULTIPLY when z = Z.zero -> Int(Z.zero)
+  | _, Top, _ -> Top
   (* basic cases *)
   | Int(a), Int(b), _ -> 
     let f = match op with
