@@ -206,7 +206,7 @@ struct
                               | Interval(a, b), Interval(c, d) when gt_bound a d -> (Bot, Bot)
                               | Interval(a, b), Interval(c, d) -> (Interval(a, min_bound b d), Interval(max_bound a c, d))
                         end
-    | AST_GREATER | AST_GREATER_EQUAL as op -> swap (compare y x op)
+    | AST_GREATER | AST_GREATER_EQUAL as op -> swap (compare y x (ast_cop_not op))
 
 
     (* backards unary operation *)
