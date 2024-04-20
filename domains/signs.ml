@@ -42,7 +42,49 @@ module SignsDomain : Value_domain.VALUE_DOMAIN =
                          | Neg -> Pos
 
     (* binary operation *)
-    let binary: t -> t -> int_binary_op -> t = failwith "unimplemented"
+    let binary x y = function
+    | AST_PLUS -> begin match x, y with
+                        | Pos, Pos -> Pos
+                        | Neg, Neg -> Neg
+                        | Null, Null -> Null
+                        | Pos, Null | Null, Pos -> Pos
+                        | Neg, Null | Null, Neg -> Neg
+                        | Bot, _ | _, Bot -> Bot
+                        | Top, _ | _, Top | Pos, Neg | Neg, Pos -> Top 
+                  end
+    | AST_MINUS -> begin match x, y with
+                      | Pos, Neg -> Pos
+                      | Neg, Pos -> Neg
+                      | Null, Null -> Null
+                      | Pos, Null | Null, Pos -> Pos
+                      | Neg, Null | Null, Neg -> Neg
+                      | Bot, _ | _, Bot -> Bot
+                      | Top, _ | _, Top | Pos, Pos | Neg, Neg -> Top 
+                  end
+    | AST_MULTIPLY -> begin match x, y with
+                            | Pos, Pos | Neg, Neg -> Pos
+                            | Neg, Pos | Pos, Neg -> Neg
+                            | (Pos|Neg|Null), Null | Null, (Pos|Neg)-> Null
+                            | Bot, _ | _, Bot -> Bot
+                            | Top, _ | _, Top -> Top
+                      end
+    | AST_DIVIDE -> begin match x, y with
+                          | Pos, Pos | Neg, Neg -> Pos
+                          | Neg, Pos | Pos, Neg -> Neg
+                          | (Pos|Neg|Null), Null -> Bot (* division by zero *)
+                          | Null, (Pos|Neg)-> Null
+                          | Bot, _ | _, Bot -> Bot
+                          | Top, _ | _, Top -> Top
+                      end
+    | AST_MODULO -> begin match x, y with
+                      (* the result can always be zero, so we do not need to worry about the sign *)
+                      (* things would have been more complex using an extended signs lattice *)
+                      | (Pos|Neg), (Pos|Neg)-> Top
+                      | (Pos|Neg|Null), Null -> Bot (* modulo by zero *)
+                      | Null, (Pos|Neg)-> Null
+                      | Bot, _ | _, Bot -> Bot
+                      | Top, _ | _, Top -> Top
+                  end
 
 
     (* comparison *)
@@ -76,8 +118,16 @@ module SignsDomain : Value_domain.VALUE_DOMAIN =
 
 
     (* set-theoretic operations *)
-    let join: t -> t -> t = failwith "unimplemented"
-    let meet: t -> t -> t = failwith "unimplemented"
+    let join x y = match x, y with
+                   | _, Bot -> x
+                   | Bot, _ -> y
+                   | x, y when x = y -> x
+                   | _ -> Top
+    let meet x y = match x, y with
+                   | _, Top -> x
+                   | Top, _ -> y
+                   | x, y when x = y -> x
+                   | _ -> Bot
 
     (* widening *)
     let widen: t -> t -> t = failwith "unimplemented"
@@ -86,12 +136,23 @@ module SignsDomain : Value_domain.VALUE_DOMAIN =
     let narrow: t -> t -> t = failwith "unimplemented"
 
     (* subset inclusion of concretizations *)
-    let subset: t -> t -> bool = failwith "unimplemented"
+    let subset x y = match x, y with
+    | Bot, _ -> true
+    | _, Top -> true
+    | _ -> false
 
     (* check the emptiness of the concretization *)
-    let is_bottom: t -> bool = failwith "unimplemented"
+    let is_bottom x = x = Bot
 
     (* print abstract element *)
-    let print: Format.formatter -> t -> unit = failwith "unimplemented"
+    let print fmt x = 
+      Format.fprintf fmt "%s@." begin 
+        match x with
+        | Bot -> "(⊥)"
+        | Top -> "(⊤)"
+        | Null -> "(0)"
+        | Pos -> "(+)"
+        | Neg -> "(-)"
+      end
 
 end
