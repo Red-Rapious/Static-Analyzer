@@ -196,8 +196,7 @@ struct
                         | Interval(_, b), Top -> (x, Interval(b, PlusInf))
                         | Top, Interval(c, _) -> (Interval(MinusInf, c), y)
                         | Interval(a, b), Interval(c, d) when geq_bound a d -> (Bot, Bot)
-                        (* TODO: substract 1 to bounds since integer *)
-                        | Interval(a, b), Interval(c, d) -> (Interval(a, min_bound b d), Interval(max_bound a c, d))
+                        | Interval(a, b), Interval(c, d) -> (Interval(a, min_bound b (sub_bound d (Finite Z.one))), Interval(max_bound a (add_bound c (Finite Z.one)), d))
                   end
     (*| AST_LESS -> begin match x, y with
                         | Interval(a, b), Interval(c, d) -> Interval(a, min_bound b (sub_bound d (Finite Z.one))), Interval(c, max_bound d (add_bound b (Finite Z.one)))
