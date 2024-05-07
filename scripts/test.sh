@@ -47,7 +47,7 @@ create_file() {
   if [[ ! -e "$file_html" ]]
   then
     cat "scripts/header.html" > $file_html
-    sed -i "s@TITLE@${filename}@" $file_html
+    sed -i "s@TITLE@${filename}@" $file_html 
     echo "<h1>${filename}</h1>" >> $file_html
     echo "<div class=\"c\">" >> $file_html
     cat $file >> $file_html

@@ -109,6 +109,12 @@ struct
     (* an element of type t abstracts a set of integers *)
     type t  = | Bot | Top | Interval of bound * bound
 
+    (* print abstract element *)
+    let print formatter = function
+    | Top -> Format.fprintf formatter "⊤"
+    | Bot -> Format.fprintf formatter "⊥"
+    | Interval(a, b) -> Format.fprintf formatter "[%s, %s]" (bound_to_string a) (bound_to_string b)
+
     (** transforms an interval into Bot if the bounds are incorrect *)
     let bottomize_if_necessary = function
     | Interval(x, y) when gt_bound x y -> Bot
@@ -181,7 +187,7 @@ struct
        compare x y op = (x,y)
      *)
     let rec compare x y = function
-    | AST_EQUAL -> let meeting = meet x y in (meeting, meeting)
+    | AST_EQUAL -> let joint = meet x y in (joint, joint)
     | AST_NOT_EQUAL -> begin match x, y with
                              (* we still have no better approximation of [-oo, +oo]\{y} than [-oo, +oo] *)
                              | Top, _ -> (Top, y)
@@ -196,7 +202,9 @@ struct
                         | Interval(_, b), Top -> (x, Interval(b, PlusInf))
                         | Top, Interval(c, _) -> (Interval(MinusInf, c), y)
                         | Interval(a, b), Interval(c, d) when geq_bound a d -> (Bot, Bot)
-                        | Interval(a, b), Interval(c, d) -> (Interval(a, min_bound b (sub_bound d (Finite Z.one))), Interval(max_bound a (add_bound c (Finite Z.one)), d))
+                        | Interval(a, b), Interval(c, d) -> 
+                          (Interval(a, min_bound b (sub_bound d (Finite Z.one))), 
+                           Interval(max_bound c (add_bound a (Finite Z.one)), d))
                   end
     (*| AST_LESS -> begin match x, y with
                         | Interval(a, b), Interval(c, d) -> Interval(a, min_bound b (sub_bound d (Finite Z.one))), Interval(c, max_bound d (add_bound b (Finite Z.one)))
@@ -217,10 +225,21 @@ struct
     | AST_GREATER | AST_GREATER_EQUAL as op -> swap (compare y x (if op = AST_GREATER then AST_LESS else AST_LESS_EQUAL))
 
     (** TODO: used for debugging, check if improves things *)
-    (*let compare x y op = ccompare x y op
+    (*and compare x y op =
       let res = ccompare x y op in
-      let res = (bottomize_if_necessary (fst res)), (bottomize_if_necessary (snd res)) in
-      let res = if fst res = Bot || snd res = Bot then Bot, Bot else res in
+      (*let res = (bottomize_if_necessary (fst res), bottomize_if_necessary (snd res)) in*)
+      if !Options.verbose then begin
+      Format.printf "compare " ;
+      print Format.std_formatter x ;
+      Format.printf " " ;
+      print Format.std_formatter y ;
+      Format.printf " %s  --->   " (Cfg_printer.string_of_compare_op op) ;
+      Format.printf "(" ;
+      print Format.std_formatter (fst res) ;
+      Format.printf ", " ;
+      print Format.std_formatter (snd res) ;
+      Format.printf ")@." 
+      end ;
       res*)
 
     (* backards unary operation *)
@@ -283,9 +302,4 @@ struct
       true
     | _ -> false
 
-    (* print abstract element *)
-    let print formatter = function
-    | Top -> Format.fprintf formatter "⊤"
-    | Bot -> Format.fprintf formatter "⊥"
-    | Interval(a, b) -> Format.fprintf formatter "[%s, %s]" (bound_to_string a) (bound_to_string b)
 end
