@@ -156,7 +156,7 @@ module SignsDomain : Value_domain.VALUE_DOMAIN =
 
 
     (* widening *)
-    let widen x y = x
+    let widen = join
 
     (* narrowing *)
     let narrow x y = failwith "unimplemented"
