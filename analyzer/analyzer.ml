@@ -14,6 +14,7 @@ open Frontend
 open Domains.Constant
 open Domains.Interval
 open Domains.Domain
+open Domains.Signs
 
 let log fmt = 
   if !Options.verbose then Format.fprintf Format.err_formatter fmt
@@ -37,6 +38,10 @@ let doit filename =
     I.iterate cfg
   | "interval" -> 
     let module I = Iterator.Iterator(Domain(Vars))(IntervalDomain) in
+    log "Starting iterator using interval domain...@." ;
+    I.iterate cfg
+  | "signs" -> 
+    let module I = Iterator.Iterator(Domain(Vars))(SignsDomain) in
     log "Starting iterator using interval domain...@." ;
     I.iterate cfg
   | _ -> failwith "The provided domain argument does not exist."

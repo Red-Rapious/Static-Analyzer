@@ -96,7 +96,7 @@ module SignsDomain : Value_domain.VALUE_DOMAIN =
        a safe, but not precise implementation, would be:
        compare x y op = (x,y)
      *)
-    let compare: t -> t -> compare_op -> (t * t) = failwith "unimplemented"
+    let compare x y op = failwith "unimplemented"
 
 
     (* backards unary operation *)
@@ -105,7 +105,7 @@ module SignsDomain : Value_domain.VALUE_DOMAIN =
        i.e., we fiter the abstract values x knowing the result r of applying
        the operation on x
      *)
-    let bwd_unary: t -> int_unary_op -> t -> t = failwith "unimplemented"
+    let bwd_unary x op r = failwith "unimplemented"
 
      (* backward binary operation *)
      (* [bwd_binary x y op r] returns (x',y') where
@@ -114,7 +114,7 @@ module SignsDomain : Value_domain.VALUE_DOMAIN =
        i.e., we filter the abstract values x and y knowing that, after
        applying the operation op, the result is in r
       *)
-    let bwd_binary: t -> t -> int_binary_op -> t -> (t * t) = failwith "unimplemented"
+    let bwd_binary x y op r = failwith "unimplemented"
 
 
     (* set-theoretic operations *)
@@ -130,10 +130,10 @@ module SignsDomain : Value_domain.VALUE_DOMAIN =
                    | _ -> Bot
 
     (* widening *)
-    let widen: t -> t -> t = failwith "unimplemented"
+    let widen x y = failwith "unimplemented"
 
     (* narrowing *)
-    let narrow: t -> t -> t = failwith "unimplemented"
+    let narrow x y = failwith "unimplemented"
 
     (* subset inclusion of concretizations *)
     let subset x y = match x, y with
