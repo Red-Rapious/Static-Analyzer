@@ -149,6 +149,50 @@ struct
       | _, Top -> x
       | Interval(a, b), Interval(c, d) -> bottomize_if_necessary (Interval(max_bound a c, min_bound b d))
 
+    let join x y =
+      match x, y with
+      | Top, _ | _, Top -> Top
+      | Bot, _ -> y
+      | _, Bot -> x
+      | Interval(a, b), Interval(c, d) -> let lb = min_bound a c
+                                          and rb = max_bound b d
+                                          in if lb = MinusInf && rb = PlusInf then Top
+                                              else Interval(lb, rb)
+
+    let binary =
+      let rec aux u v op = match u, v with
+      | Top, _ | _, Top -> Top
+      | Bot , _ | _, Bot  -> Bot 
+      | Interval (xu, yu), Interval (xv, yv) -> begin
+        match op with
+        | AST_PLUS -> Interval (add_bound xu xv, add_bound yu yv)
+        | AST_MINUS -> Interval (sub_bound xu yv, sub_bound yu xv)
+        | AST_MULTIPLY ->
+          let min4 n1 n2 n3 n4 = min_bound (min_bound n1 n2) (min_bound n3 n4)
+          and max4 n1 n2 n3 n4 = max_bound (max_bound n1 n2) (max_bound n3 n4)
+          in
+          let xuxv = mul_bound xu xv
+          and xuyv = mul_bound xu yv
+          and yuxv = mul_bound yu xv
+          and yuyv = mul_bound yu yv
+          in
+          Interval (min4 xuxv xuyv yuxv yuyv, max4 xuxv xuyv yuxv yuyv)
+        | AST_DIVIDE ->
+          let div_pos u v = match u, v with
+          | Top, _ | _, Top -> Top
+          | Bot, _ | _, Bot  -> Bot 
+          | Interval (xu, yu), Interval (xv, yv) -> Interval (div_bound xu yv, div_bound yu xv)
+          in
+          let upos = bottomize_if_necessary (Interval (max_bound (Finite Z.zero) xu, yu))
+          and uneg = bottomize_if_necessary (Interval (max_bound (Finite Z.one) (neg_bound yu), (neg_bound xu)))
+          and vpos = bottomize_if_necessary (Interval (max_bound (Finite Z.one) xv, yv))
+          and vneg = bottomize_if_necessary (Interval (max_bound (Finite Z.one) (neg_bound yv), (neg_bound xv)))
+          in
+          join (join (div_pos upos vpos) (div_pos uneg vneg)) (unary (join (div_pos uneg vpos) (div_pos upos vneg)) AST_UNARY_MINUS)
+        | AST_MODULO -> aux u (aux v (aux u v AST_DIVIDE) AST_MULTIPLY) AST_MINUS
+        end
+      in aux
+
     (* binary operation *)
     let binary x y op = 
       match x, y, op with
@@ -156,25 +200,31 @@ struct
       | Top, _, _ -> Top
       | Bot, _, _ -> Bot
       | _, Bot, _ -> Bot
-      | Interval(a, b), Interval(c, d), _ -> match op with
-                                             | AST_PLUS     -> Interval(add_bound a c, add_bound b d)
-                                             | AST_MINUS    -> Interval(sub_bound a d, sub_bound b c)
-                                             | AST_MULTIPLY -> let b1 = mul_bound a c
-                                                               and b2 = mul_bound a d
-                                                               and b3 = mul_bound b c
-                                                               and b4 = mul_bound b d
-                                                               in let mini = min_bound (min_bound b1 b2) (min_bound b3 b4)
-                                                                  and maxi = max_bound (max_bound b1 b2) (max_bound b3 b4)
-                                                               in Interval(mini, maxi)
-                                             | AST_MODULO   -> meet x y
-                                             | AST_DIVIDE   -> let b1 = div_bound a c
-                                                               and b2 = div_bound a d
-                                                               and b3 = div_bound b c
-                                                               and b4 = div_bound b d
-                                                               in let mini = min_bound (min_bound b1 b2) (min_bound b3 b4)
-                                                                  and maxi = max_bound (max_bound b1 b2) (max_bound b3 b4)
-                                                               in Interval(mini, maxi)
-                                             
+      | Interval(a, b), Interval(c, d), _ -> 
+        match op with
+        | AST_PLUS     -> Interval(add_bound a c, add_bound b d)
+        | AST_MINUS    -> Interval(sub_bound a d, sub_bound b c)
+        | AST_MULTIPLY -> let b1 = mul_bound a c
+                          and b2 = mul_bound a d
+                          and b3 = mul_bound b c
+                          and b4 = mul_bound b d
+                          in let mini = min_bound (min_bound b1 b2) (min_bound b3 b4)
+                            and maxi = max_bound (max_bound b1 b2) (max_bound b3 b4)
+                          in Interval(mini, maxi)
+        | AST_MODULO   -> meet x y
+        | AST_DIVIDE -> let naive x y = match x, y with
+                        | Top, _ | _, Top -> Top
+                        | Bot, _ | _, Bot  -> Bot 
+                        | Interval (a, b), Interval (c, d) -> Interval (div_bound a d, div_bound b c)
+                        in
+                        let leftp = bottomize_if_necessary (Interval (max_bound (Finite Z.zero) a, b))
+                        and leftn = bottomize_if_necessary (Interval (max_bound (Finite Z.one) (neg_bound b), (neg_bound a)))
+                        and rightp = bottomize_if_necessary (Interval (max_bound (Finite Z.one) c, d))
+                        and rightn = bottomize_if_necessary (Interval (max_bound (Finite Z.one) (neg_bound d), (neg_bound c)))
+                        in
+                        let pos = join (naive leftp rightp) (naive leftn rightn)
+                        and neg = unary (join (naive leftn rightp) (naive leftp rightn)) AST_UNARY_MINUS in
+                        join pos neg
 
 
     (* comparison *)
@@ -231,16 +281,6 @@ struct
     | AST_MODULO -> (x, y) (* meet x Top = x, and we can't invert modulo so we abstract the invert as Top *)
     | _ -> (meet x (binary r y (ast_bop_inv op)), meet y (binary r x (ast_bop_inv op)))
 
-
-    let join x y =
-      match x, y with
-      | Top, _ | _, Top -> Top
-      | Bot, _ -> y
-      | _, Bot -> x
-      | Interval(a, b), Interval(c, d) -> let lb = min_bound a c
-                                          and rb = max_bound b d
-                                          in if lb = MinusInf && rb = PlusInf then Top
-                                             else Interval(lb, rb)
 
     (* narrowing *)
     let narrow x y = failwith "unimplemented"
