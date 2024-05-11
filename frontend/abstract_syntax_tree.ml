@@ -85,6 +85,14 @@ let ast_cop_not = function
 | AST_GREATER       -> AST_LESS_EQUAL
 | AST_GREATER_EQUAL -> AST_LESS
 
+let ast_cop_reverse = function
+| AST_EQUAL -> AST_EQUAL
+| AST_NOT_EQUAL -> AST_NOT_EQUAL
+| AST_LESS -> AST_GREATER
+| AST_LESS_EQUAL -> AST_GREATER_EQUAL
+| AST_GREATER -> AST_LESS
+| AST_GREATER_EQUAL -> AST_LESS_EQUAL
+
 type bool_binary_op =
   | AST_AND           (* e && e *)
   | AST_OR            (* e || e *)

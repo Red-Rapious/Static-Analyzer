@@ -186,7 +186,32 @@ struct
        a safe, but not precise implementation, would be:
        compare x y op = (x,y)
      *)
-    let rec compare x y = function
+     let mono_compare a b c d op =
+      let lu, ru = match op with
+      | AST_EQUAL -> max_bound a c, min_bound b d
+      | AST_NOT_EQUAL ->
+        if c = d && b = c then
+          a, sub_bound b (Finite Z.one)
+        else if c = d && d = a then
+          add_bound a (Finite Z.one), b
+        else
+          a, b
+      | AST_LESS -> a, min_bound b (sub_bound d (Finite Z.one))
+      | AST_LESS_EQUAL -> a, min_bound b d
+      | AST_GREATER -> max_bound a (add_bound c (Finite Z.one)), b
+      | AST_GREATER_EQUAL -> max_bound a c, b
+      in
+      bottomize_if_necessary (Interval (lu, ru))
+    
+    let compare u v op =
+      let res = 
+      match (u, v) with
+      | Interval (a, b), Interval (c, d) -> mono_compare a b c d op, 
+                                            mono_compare c d a b (ast_cop_reverse op)
+      | _ -> Bot, Bot
+      in
+      res
+    (*let rec compare x y = function
     | AST_EQUAL -> let joint = meet x y in (joint, joint)
     | AST_NOT_EQUAL -> begin match x, y with
                              (* we still have no better approximation of [-oo, +oo]\{y} than [-oo, +oo] *)
@@ -222,7 +247,7 @@ struct
                         | Interval(a, b), Interval(c, d) -> Interval(a, min_bound b d), Interval(c, max_bound d b)
                         | _ -> (Bot, Bot)
                         end*)
-    | AST_GREATER | AST_GREATER_EQUAL as op -> swap (compare y x (if op = AST_GREATER then AST_LESS else AST_LESS_EQUAL))
+    | AST_GREATER | AST_GREATER_EQUAL as op -> swap (compare y x (if op = AST_GREATER then AST_LESS else AST_LESS_EQUAL))*)
 
     (** TODO: used for debugging, check if improves things *)
     (*and compare x y op =
