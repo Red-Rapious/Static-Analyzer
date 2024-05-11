@@ -211,61 +211,6 @@ struct
       | _ -> Bot, Bot
       in
       res
-    (*let rec compare x y = function
-    | AST_EQUAL -> let joint = meet x y in (joint, joint)
-    | AST_NOT_EQUAL -> begin match x, y with
-                             (* we still have no better approximation of [-oo, +oo]\{y} than [-oo, +oo] *)
-                             | Top, _ -> (Top, y)
-                             | _, Top -> (x, Top)
-                             | Bot, _ | _, Bot -> (Bot, Bot)
-                             | Interval(a, b), Interval(c, d) when a = c && b = d -> (Bot, Bot)
-                             | Interval(_, _), Interval(_, _) -> (x, y)
-                       end
-    | AST_LESS -> begin match x, y with
-                        | Top, Top -> (Top, Top)
-                        | Bot, _ | _, Bot -> (Bot, Bot)
-                        | Interval(_, b), Top -> (x, Interval(b, PlusInf))
-                        | Top, Interval(c, _) -> (Interval(MinusInf, c), y)
-                        | Interval(a, b), Interval(c, d) when geq_bound a d -> (Bot, Bot)
-                        | Interval(a, b), Interval(c, d) -> 
-                          (Interval(a, min_bound b (sub_bound d (Finite Z.one))), 
-                           Interval(max_bound c (add_bound a (Finite Z.one)), d))
-                  end
-    (*| AST_LESS -> begin match x, y with
-                        | Interval(a, b), Interval(c, d) -> Interval(a, min_bound b (sub_bound d (Finite Z.one))), Interval(c, max_bound d (add_bound b (Finite Z.one)))
-                        | _ -> (Bot, Bot)
-                  end*)
-    | AST_LESS_EQUAL -> begin match x, y with
-                              | Top, Top -> (Top, Top)
-                              | Bot, _ | _, Bot -> (Bot, Bot)
-                              | Interval(_, b), Top -> (x, Interval(b, PlusInf))
-                              | Top, Interval(c, _) -> (Interval(MinusInf, c), y)
-                              | Interval(a, b), Interval(c, d) when gt_bound a d -> (Bot, Bot)
-                              | Interval(a, b), Interval(c, d) -> (Interval(a, min_bound b d), Interval(max_bound a c, d))
-                        end
-    (*| AST_LESS_EQUAL -> begin match x, y with
-                        | Interval(a, b), Interval(c, d) -> Interval(a, min_bound b d), Interval(c, max_bound d b)
-                        | _ -> (Bot, Bot)
-                        end*)
-    | AST_GREATER | AST_GREATER_EQUAL as op -> swap (compare y x (if op = AST_GREATER then AST_LESS else AST_LESS_EQUAL))*)
-
-    (** TODO: used for debugging, check if improves things *)
-    (*and compare x y op =
-      let res = ccompare x y op in
-      (*let res = (bottomize_if_necessary (fst res), bottomize_if_necessary (snd res)) in*)
-      if !Options.verbose then begin
-      Format.printf "compare " ;
-      print Format.std_formatter x ;
-      Format.printf " " ;
-      print Format.std_formatter y ;
-      Format.printf " %s  --->   " (Cfg_printer.string_of_compare_op op) ;
-      Format.printf "(" ;
-      print Format.std_formatter (fst res) ;
-      Format.printf ", " ;
-      print Format.std_formatter (snd res) ;
-      Format.printf ")@." 
-      end ;
-      res*)
 
     (* backards unary operation *)
     (* [bwd_unary x op r] return x':
