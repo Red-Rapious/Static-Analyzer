@@ -147,7 +147,7 @@ struct
       | Bot, _ | _, Bot -> Bot
       | Top, _ -> y
       | _, Top -> x
-      | Interval(a, b), Interval(c, d) -> bottomize_if_necessary (Interval(min_bound a c, max_bound b d))
+      | Interval(a, b), Interval(c, d) -> bottomize_if_necessary (Interval(max_bound a c, min_bound b d))
 
     (* binary operation *)
     let binary x y op = 
@@ -218,7 +218,7 @@ struct
        i.e., we fiter the abstract values x knowing the result r of applying
        the operation on x
      *)
-    let bwd_unary x op r = meet x (unary r (ast_uop_inv op))
+    let bwd_unary x op r = meet x (unary r op)
 
     (* backward binary operation *)
     (* [bwd_binary x y op r] returns (x',y') where
