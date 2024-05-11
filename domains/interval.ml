@@ -245,6 +245,36 @@ struct
     *)
     let bwd_binary x y op r = match op with 
     | AST_MODULO -> (x, y) (* meet x Top = x, and we can't invert modulo so we abstract the invert as Top *)
+    | AST_MULTIPLY -> begin
+      match x, y, r with
+      | Top, _, _ | _, Top, _ | _, _, Top -> Top, Top
+      | Bot, _, _ | _, Bot, _ | _, _, Bot -> Bot, Bot
+      | Interval (a, b), Interval (c, d), Interval (e, f) ->
+        let contains_zero x y = geq_bound (Finite Z.zero) x && geq_bound y (Finite Z.zero) in
+        let binary_div_round_up x y = match x, y with
+        | Top, _ | _, Top -> Top
+        | Bot, _ | _, Bot -> Bot
+        | Interval (a, b), Interval (c, d) ->
+          if d = PlusInf then Interval (Finite Z.one, div_bound b c)
+          else Interval (div_bound (add_bound a (sub_bound d (Finite Z.one))) d, div_bound b c)
+        in
+
+        let remainderp = bottomize_if_necessary (Interval (max_bound (Finite Z.one) e, f))
+        and remaindern = bottomize_if_necessary (Interval (max_bound (Finite Z.one) (neg_bound f), neg_bound e))
+        in
+
+        let backward a b =
+          if contains_zero a b && contains_zero e f then Top
+          else
+            let pos = bottomize_if_necessary (Interval (max_bound (Finite Z.one) a, b))
+            and neg = bottomize_if_necessary (Interval (max_bound (Finite Z.one) (neg_bound b), neg_bound b))
+            in
+            join
+              (join (binary_div_round_up remainderp pos) (binary_div_round_up remaindern neg))
+              (unary (join (binary_div_round_up remaindern pos) (binary_div_round_up remainderp neg)) AST_UNARY_MINUS)
+        in
+        (meet (backward c d) x, meet (backward a b) y)
+    end
     | _ -> (meet x (binary r y (ast_bop_inv op)), meet y (binary r x (ast_bop_inv op)))
 
 
