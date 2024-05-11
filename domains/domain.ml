@@ -79,10 +79,11 @@ module type DOMAIN = functor (_:VALUE_DOMAIN) -> (* functor as suggested by the 
 
 
     (* empty set of environments *)
-    let bottom: t = VarMap.empty
+    let bottom =
+      List.fold_left (fun map var -> VarMap.add var ValueDomain.bottom map) VarMap.empty Vars.support
 
     (* whether the abstract element represents the empty set *)
-    let is_bottom: t -> bool = VarMap.is_empty
+    let is_bottom = VarMap.exists (fun domain -> ValueDomain.is_bottom)
 
     (* simple conversion function from CFG to abstract domain *)
     let rec int_expr_to_value domain = function
