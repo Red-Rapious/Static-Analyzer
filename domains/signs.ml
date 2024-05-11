@@ -96,25 +96,32 @@ module SignsDomain : Value_domain.VALUE_DOMAIN =
        a safe, but not precise implementation, would be:
        compare x y op = (x,y)
      *)
-    let compare x y op = failwith "unimplemented"
-
-
-    (* backards unary operation *)
-    (* [bwd_unary x op r] return x':
-       - x' abstracts the set of v in x such as op v is in r
-       i.e., we fiter the abstract values x knowing the result r of applying
-       the operation on x
-     *)
-    let bwd_unary x op r = failwith "unimplemented"
-
-     (* backward binary operation *)
-     (* [bwd_binary x y op r] returns (x',y') where
-       - x' abstracts the set of v  in x such that v op v' is in r for some v' in y
-       - y' abstracts the set of v' in y such that v op v' is in r for some v  in x
-       i.e., we filter the abstract values x and y knowing that, after
-       applying the operation op, the result is in r
-      *)
-    let bwd_binary x y op r = failwith "unimplemented"
+     let rec compare x y op = match op with
+     | AST_EQUAL -> begin match x, y with
+                          | _, Top -> x, x
+                          | Top, _  -> y, y
+                          | Null, Null | Pos, Pos | Neg, Neg -> x, y
+                          | _, _ -> (Bot, Bot)
+                    end
+     | AST_NOT_EQUAL -> begin match x, y with
+                              | Top, Top -> Top, Top
+                              | Bot, _ | _, Bot -> Bot, Bot
+                              | Null, Null | Pos, Pos | Neg, Neg -> Bot, Bot
+                              | _, _ -> x, y
+                        end
+     | AST_LESS -> begin match x, y with
+                         | Top, Top -> Top, Top
+                         | Null, Neg | Pos, Neg | Pos, Null
+                         | Null, Null | Pos, Pos | Neg, Neg -> Bot, Bot
+                         | _, _ -> x, y
+                   end
+     | AST_LESS_EQUAL -> begin match x, y with
+                               | Top, Top -> Top, Top
+                               | Null, Neg | Pos, Neg | Pos, Null-> Bot, Bot
+                               | _, _ -> x, y
+                         end
+     | AST_GREATER -> let (x', y') = compare y x AST_LESS in y', x'
+     | AST_GREATER_EQUAL -> let (x', y') = compare y x AST_LESS_EQUAL in y', x'
 
 
     (* set-theoretic operations *)
@@ -123,14 +130,33 @@ module SignsDomain : Value_domain.VALUE_DOMAIN =
                    | Bot, _ -> y
                    | x, y when x = y -> x
                    | _ -> Top
+
     let meet x y = match x, y with
-                   | _, Top -> x
-                   | Top, _ -> y
-                   | x, y when x = y -> x
-                   | _ -> Bot
+                  | _, Top -> x
+                  | Top, _ -> y
+                  | x, y when x = y -> x
+                  | _ -> Bot
+
+    (* backards unary operation *)
+    (* [bwd_unary x op r] return x':
+       - x' abstracts the set of v in x such as op v is in r
+       i.e., we fiter the abstract values x knowing the result r of applying
+       the operation on x
+     *)
+     let bwd_unary x op r = meet x (unary r (ast_uop_inv op))
+
+     (* backward binary operation *)
+     (* [bwd_binary x y op r] returns (x',y') where
+       - x' abstracts the set of v  in x such that v op v' is in r for some v' in y
+       - y' abstracts the set of v' in y such that v op v' is in r for some v  in x
+       i.e., we filter the abstract values x and y knowing that, after
+       applying the operation op, the result is in r
+      *)
+    let bwd_binary x y op r = x, y
+
 
     (* widening *)
-    let widen x y = failwith "unimplemented"
+    let widen x y = x
 
     (* narrowing *)
     let narrow x y = failwith "unimplemented"

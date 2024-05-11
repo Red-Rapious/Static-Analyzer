@@ -9,7 +9,7 @@
 void main(){
   int i = 42;
   int j = -42;
+  assert(i == j); //@KO
   assert(i != 0); //@OK
   assert(j != 0); //@OK
-  assert(i == j); //@KO
 }
