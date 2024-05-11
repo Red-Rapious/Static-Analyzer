@@ -159,40 +159,6 @@ struct
                                           in if lb = MinusInf && rb = PlusInf then Top
                                               else Interval(lb, rb)
 
-    let binary =
-      let rec aux u v op = match u, v with
-      | Top, _ | _, Top -> Top
-      | Bot , _ | _, Bot  -> Bot 
-      | Interval (xu, yu), Interval (xv, yv) -> begin
-        match op with
-        | AST_PLUS -> Interval (add_bound xu xv, add_bound yu yv)
-        | AST_MINUS -> Interval (sub_bound xu yv, sub_bound yu xv)
-        | AST_MULTIPLY ->
-          let min4 n1 n2 n3 n4 = min_bound (min_bound n1 n2) (min_bound n3 n4)
-          and max4 n1 n2 n3 n4 = max_bound (max_bound n1 n2) (max_bound n3 n4)
-          in
-          let xuxv = mul_bound xu xv
-          and xuyv = mul_bound xu yv
-          and yuxv = mul_bound yu xv
-          and yuyv = mul_bound yu yv
-          in
-          Interval (min4 xuxv xuyv yuxv yuyv, max4 xuxv xuyv yuxv yuyv)
-        | AST_DIVIDE ->
-          let div_pos u v = match u, v with
-          | Top, _ | _, Top -> Top
-          | Bot, _ | _, Bot  -> Bot 
-          | Interval (xu, yu), Interval (xv, yv) -> Interval (div_bound xu yv, div_bound yu xv)
-          in
-          let upos = bottomize_if_necessary (Interval (max_bound (Finite Z.zero) xu, yu))
-          and uneg = bottomize_if_necessary (Interval (max_bound (Finite Z.one) (neg_bound yu), (neg_bound xu)))
-          and vpos = bottomize_if_necessary (Interval (max_bound (Finite Z.one) xv, yv))
-          and vneg = bottomize_if_necessary (Interval (max_bound (Finite Z.one) (neg_bound yv), (neg_bound xv)))
-          in
-          join (join (div_pos upos vpos) (div_pos uneg vneg)) (unary (join (div_pos uneg vpos) (div_pos upos vneg)) AST_UNARY_MINUS)
-        | AST_MODULO -> aux u (aux v (aux u v AST_DIVIDE) AST_MULTIPLY) AST_MINUS
-        end
-      in aux
-
     (* binary operation *)
     let binary x y op = 
       match x, y, op with
