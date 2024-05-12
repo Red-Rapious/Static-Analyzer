@@ -265,8 +265,9 @@ treat_examples "interval" "Interval operations" "--domain interval" ""
 treat_examples "constant_loop" "Constants loops (I)" "--domain interval" ""
 treat_examples "interval_loop" "Interval loops" "--domain interval" ""
 treat_examples "sign" "Signs operations" "--domain constants" ""
-treat_examples "sign" "Signs operations" "--domain interval" ""
 treat_examples "sign" "Signs operations" "--domain signs" ""
+treat_examples "congruence" "Congruence operations" "--domain constants" "" # remove after internal testing
+treat_examples "congruence" "Congruence operations" "--domain congruences" ""
 echo "</table>"                                   >> $index_html
 echo "</body>"                                    >> $index_html
 echo "</html>"                                    >> $index_html

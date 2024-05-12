@@ -11,10 +11,7 @@
 *)
 
 open Frontend
-open Domains.Constant
-open Domains.Interval
 open Domains.Domain
-open Domains.Signs
 
 let log fmt = 
   if !Options.verbose then Format.fprintf Format.err_formatter fmt
@@ -28,20 +25,24 @@ let doit filename =
     Format.printf "%a" Cfg_printer.print_cfg cfg;
   Cfg_printer.output_dot !Options.cfg_out cfg;
 
-  let module Vars : Domains.Domain.VARS = struct
+  let module Vars : VARS = struct
     let support = cfg.cfg_vars
   end in
   begin match !Options.domain with
   | "constants" -> 
-    let module I = Iterator.Iterator(Domain(Vars))(ConstantDomain) in
+    let module I = Iterator.Iterator(Domain(Vars))(Domains.Constant.ConstantDomain) in
     log "Starting iterator using constant domain...@." ;
     I.iterate cfg
   | "interval" -> 
-    let module I = Iterator.Iterator(Domain(Vars))(IntervalDomain) in
+    let module I = Iterator.Iterator(Domain(Vars))(Domains.Interval.IntervalDomain) in
     log "Starting iterator using interval domain...@." ;
     I.iterate cfg
   | "signs" -> 
-    let module I = Iterator.Iterator(Domain(Vars))(SignsDomain) in
+    let module I = Iterator.Iterator(Domain(Vars))(Domains.Signs.SignsDomain) in
+    log "Starting iterator using interval domain...@." ;
+    I.iterate cfg
+  | "congruences" -> 
+    let module I = Iterator.Iterator(Domain(Vars))(Domains.Congruences.CongruencesDomain) in
     log "Starting iterator using interval domain...@." ;
     I.iterate cfg
   | _ -> failwith "The provided domain argument does not exist."
