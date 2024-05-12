@@ -6,6 +6,9 @@
  *                 Created by Antoine Groudiev
  */
 
+// This important test checks whether the property "is a multiple of" is
+// verifiable using the congruence domain
+
 // This example is especially interesting since the constants domain
 // fails on it, while the congruences domain succeeds.
 

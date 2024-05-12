@@ -6,12 +6,12 @@
  *                 Created by Antoine Groudiev
  */
 
-// This test checks simple modulo
+// This test checks simple add operations on constants
 
 void main(){
-  int i = 10;
-  int j = 3;
-  int x = i % j;
-  assert(x == 1); //@OK
-  assert(x == 0); //@KO
+  int i = 24;
+  int j = 42;
+  int x = i + j;
+  assert(x == 67); //@KO
+  assert(x == 66); //@OK
 }

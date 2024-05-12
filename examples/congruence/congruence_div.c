@@ -6,6 +6,8 @@
  *                 Created by Antoine Groudiev
  */
 
+// This test checks whether factors are maintained after a division
+
 // This example is especially interesting since the constants domain
 // fails on it, while the congruences domain succeeds.
 

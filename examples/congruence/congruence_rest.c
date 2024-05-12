@@ -6,18 +6,18 @@
  *                 Created by Antoine Groudiev
  */
 
-// This test checks whether the rest of the euclidian division
-// behaves accordingly with addition
+// This test checks whether the rest of an euclidian division is always
+// reduced between 0 and q-1, where q is the quotient
 
 // This example is especially interesting since the constants domain
 // fails on it, while the congruences domain succeeds.
 
 void main(){
-  int r1 = rand(1, 10); // abstracted as Top = { 1*n+0 | n }
-  int r2 = rand(1, 10);
+  int r = rand(1, 10); // abstracted as Top = { 1*n+0 | n }
 
-  int i = 3 * r1 + 1;
-  int j = 3 * r2 + 1;
-  assert((i+j) % 3 == 2); //@OK
-  assert((i+j) % 3 == 0); //@KO
+  int i = 3 * r + 1;
+  int j = 6 * r + 1;
+  int k = 9 * r + 1;
+  assert((i+j+k) % 3 == 0); //@OK
+  assert((i+j+k) % 3 == 3); //@KO
 }
