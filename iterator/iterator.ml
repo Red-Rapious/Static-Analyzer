@@ -36,6 +36,13 @@ struct
   let rec iter_arc environment arc : D.t =
     let domain = environment_of_node environment arc.arc_src
     in
+    if !Options.verbose then begin
+      Format.printf "Domain for ";
+      Cfg_printer.print_inst Format.std_formatter arc.arc_inst ;
+      Format.printf "@." ;
+      D.print Format.std_formatter domain ;
+      Format.printf "@."
+    end ;
     match arc.arc_inst with
     | CFG_skip _ -> domain
     | CFG_assign (var, expr) -> D.assign domain var expr

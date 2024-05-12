@@ -46,8 +46,13 @@ module CongruencesDomain : Value_domain.VALUE_DOMAIN =
                                             else top
                                           | AST_DIVIDE -> top
                                           | AST_MODULO when (a2, b2) = (Z.zero, Z.zero) -> Bot (* division by zero *)
-                                          | AST_MODULO when a2 = Z.zero && b2 <= a1 -> Modulo(Z.zero, Z.(mod) a1 a2)
-                                          (* TODO: one missing case? *)
+                                          | AST_MODULO when a1 = Z.zero && a2 = Z.zero -> Modulo(Z.zero, Z.(mod) b1 b2)
+                                          | AST_MODULO when a2 = Z.zero && b2 <= a1 -> Modulo(Z.zero, Z.(mod) b1 b2)
+                                          | AST_MODULO when a2 = Z.zero -> Modulo(Z.gcd a1 (Z.gcd a2 b2), b1) (* avoid division by zero error *)
+                                          | AST_MODULO 
+                                              when a1 = Z.zero 
+                                                && b1 < (Z.max (Z.abs (Z.sub a2 (Z.(mod) b2 a2))) (Z.(mod) b2 a2)) 
+                                              -> Modulo (a1, b1)
                                           | AST_MODULO -> Modulo(Z.gcd a1 (Z.gcd a2 b2), b1)
 
     (* comparison *)
