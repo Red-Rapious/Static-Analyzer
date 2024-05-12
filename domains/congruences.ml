@@ -12,7 +12,7 @@ module CongruencesDomain : Value_domain.VALUE_DOMAIN =
     *)
     type t = | Bot | Modulo of Z.t * Z.t
 
-    (* unrestricted value: [-oo,+oo] *)
+    (* unrestricted value: ℤ *)
     let top = Modulo (Z.one, Z.zero)
 
     (* bottom value: empty set *)
@@ -52,14 +52,27 @@ module CongruencesDomain : Value_domain.VALUE_DOMAIN =
 
     (* comparison *)
     (* [compare x y op] returns (x',y') where
-       - x' abstracts the set of v  in x such that v op v' is true for some v' in y
-       - y' abstracts the set of v' in y such that v op v' is true for some v  in x
-       i.e., we filter the abstract values x and y knowing that the test is true
+        - x' abstracts the set of v  in x such that v op v' is true for some v' in y
+        - y' abstracts the set of v' in y such that v op v' is true for some v  in x
+        i.e., we filter the abstract values x and y knowing that the test is true
 
-       a safe, but not precise implementation, would be:
-       compare x y op = (x,y)
-     *)
-     let rec compare x y op = x, y
+        a safe, but not precise implementation, would be:
+        compare x y op = (x,y)
+      *)
+    let rec compare x y op =
+      match x, y with
+      (* congruences performs poorly for comparaison *)
+      (* the only interesting case is the case with two constants *)
+      | Modulo(z, b1), Modulo(z', b2) when z = Z.zero && z' = Z.zero -> begin
+        match op with
+        | AST_EQUAL -> if b1 = b2 then x, y else Bot, Bot
+        | AST_NOT_EQUAL -> if b2 != b2 then x, y else Bot, Bot
+        | AST_GREATER -> if b1 > b2 then x, y else Bot, Bot
+        | AST_GREATER_EQUAL -> if b1 >= b2 then x, y else Bot, Bot
+        | AST_LESS -> if b1 < b2 then x, y else Bot, Bot
+        | AST_LESS_EQUAL -> if b1 <= b2 then x, y else Bot, Bot
+        end
+      | _ -> x, y
 
 
     (* set-theoretic operations *)
@@ -85,16 +98,16 @@ module CongruencesDomain : Value_domain.VALUE_DOMAIN =
        i.e., we fiter the abstract values x knowing the result r of applying
        the operation on x
      *)
-     let bwd_unary x op r = meet x (unary r (ast_uop_inv op))
+    let bwd_unary x op r = meet x (unary r (ast_uop_inv op))
 
-     (* backward binary operation *)
-     (* [bwd_binary x y op r] returns (x',y') where
-       - x' abstracts the set of v  in x such that v op v' is in r for some v' in y
-       - y' abstracts the set of v' in y such that v op v' is in r for some v  in x
-       i.e., we filter the abstract values x and y knowing that, after
-       applying the operation op, the result is in r
-      *)
-      let bwd_binary x y op r = x, y
+    (* backward binary operation *)
+    (* [bwd_binary x y op r] returns (x',y') where
+      - x' abstracts the set of v  in x such that v op v' is in r for some v' in y
+      - y' abstracts the set of v' in y such that v op v' is in r for some v  in x
+      i.e., we filter the abstract values x and y knowing that, after
+      applying the operation op, the result is in r
+    *)
+    let bwd_binary x y op r = x, y
 
 
     (* widening *)
