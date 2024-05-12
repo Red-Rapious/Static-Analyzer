@@ -152,7 +152,19 @@ module SignsDomain : Value_domain.VALUE_DOMAIN =
        i.e., we filter the abstract values x and y knowing that, after
        applying the operation op, the result is in r
       *)
-    let bwd_binary x y op r = x, y
+      let bwd_binary x y op r = match op with 
+      | AST_MODULO -> (x, y) (* meet x Top = x, and we can't invert modulo so we abstract the invert as Top *)
+      | AST_MULTIPLY -> 
+        let aux x y r = match y, r with
+        (* no further information since 0 is absorbant *)
+        | Null, Null -> x
+        (* this can't happen since _ * 0 = 0 *)
+        | (Pos|Neg), Null -> Bot
+        (* default case *)
+        | _, _ -> meet x (binary r y (ast_bop_inv op))
+        in
+        (aux x y r, aux y x r)
+      | _ -> (meet x (binary r y (ast_bop_inv op)), meet y (binary r x (ast_bop_inv op)))
 
 
     (* widening *)
