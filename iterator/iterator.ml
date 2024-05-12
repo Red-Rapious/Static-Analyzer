@@ -54,6 +54,14 @@ struct
           D.print Format.std_formatter false_domain ; 
           Format.printf "@."
         end
+      end else begin
+        if !Options.verbose then begin
+          Format.printf "The assertion at %a is always true.\nTrue domain:\n" Cfg_printer.pp_pos (fst extent) ;
+          D.print Format.std_formatter true_domain ; 
+          Format.printf "False domain:\n" ;
+          D.print Format.std_formatter false_domain ; 
+          Format.printf "@."
+        end
       end ; 
       true_domain
   

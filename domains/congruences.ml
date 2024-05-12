@@ -66,7 +66,7 @@ module CongruencesDomain : Value_domain.VALUE_DOMAIN =
       | Modulo(z, b1), Modulo(z', b2) when z = Z.zero && z' = Z.zero -> begin
         match op with
         | AST_EQUAL -> if b1 = b2 then x, y else Bot, Bot
-        | AST_NOT_EQUAL -> if b2 != b2 then x, y else Bot, Bot
+        | AST_NOT_EQUAL -> if b1 != b2 then x, y else Bot, Bot
         | AST_GREATER -> if b1 > b2 then x, y else Bot, Bot
         | AST_GREATER_EQUAL -> if b1 >= b2 then x, y else Bot, Bot
         | AST_LESS -> if b1 < b2 then x, y else Bot, Bot
