@@ -186,11 +186,11 @@ module SignsDomain : Value_domain.VALUE_DOMAIN =
     let print fmt x = 
       Format.fprintf fmt "%s@." begin 
         match x with
-        | Bot -> "(⊥)"
-        | Top -> "(⊤)"
-        | Null -> "(0)"
-        | Pos -> "(+)"
-        | Neg -> "(-)"
+        | Bot -> "⊥"
+        | Top -> "⊤"
+        | Null -> "0"
+        | Pos -> "+"
+        | Neg -> "-"
       end
 
 end

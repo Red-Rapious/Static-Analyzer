@@ -111,9 +111,9 @@ struct
 
     (* print abstract element *)
     let print formatter = function
-    | Top -> Format.fprintf formatter "⊤"
-    | Bot -> Format.fprintf formatter "⊥"
-    | Interval(a, b) -> Format.fprintf formatter "[%s, %s]" (bound_to_string a) (bound_to_string b)
+    | Top -> Format.fprintf formatter "⊤@."
+    | Bot -> Format.fprintf formatter "⊥@."
+    | Interval(a, b) -> Format.fprintf formatter "[%s, %s]@." (bound_to_string a) (bound_to_string b)
 
     (** transforms an interval into Bot if the bounds are incorrect *)
     let bottomize_if_necessary = function
