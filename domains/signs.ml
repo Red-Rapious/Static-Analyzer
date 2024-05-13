@@ -193,4 +193,13 @@ module SignsDomain : Value_domain.VALUE_DOMAIN =
         | Neg -> "-"
       end
 
+    let of_sign = function
+    | Value_domain.Neg -> Neg
+    | Value_domain.Pos -> Pos 
+    | Value_domain.Bot -> Bot
+    | Value_domain.Top -> Top
+  
+    let of_cong _ = failwith "unimplemented"
+    let to_sign _ = failwith "unimplemented"
+    let to_congruences _ = failwith "unimplemented"
 end

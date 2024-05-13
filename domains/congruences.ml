@@ -136,4 +136,11 @@ module CongruencesDomain : Value_domain.VALUE_DOMAIN =
       | Bot -> Format.fprintf fmt "⊥@."
       | Modulo(a, b) -> Format.fprintf fmt "{ %s·n+%s | n∈ℤ }@." (Z.to_string a) (Z.to_string b)
 
+    let of_cong = function
+    | Value_domain.Bot -> Bot
+    | Value_domain.Modulo(a, b) -> Modulo(a, b)
+
+    let of_sign _ = failwith "unimplemented"
+    let to_sign x = failwith "unimplemented"
+    let to_congruences _ = failwith "unimplemented"
 end

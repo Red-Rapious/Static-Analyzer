@@ -27,7 +27,7 @@ module ReducedProductDomain : Value_domain.VALUE_DOMAIN =
     (* interval: [a,b] *)
     let rand a b = S.rand a b, I.rand a b, C.rand a b
 
-    let reduction (s, i, c) = (s, i, c)
+    let reduction (s, i, c) = (S.meet s (S.of_sign (I.to_sign i)), i, C.meet c (C.of_sign (I.to_sign i)))
 
     (* unary operation *)
     let unary (s, i, c) op = reduction (S.unary s op, I.unary i op, C.unary c op)
@@ -97,4 +97,9 @@ module ReducedProductDomain : Value_domain.VALUE_DOMAIN =
       I.print fmt i;
       Format.fprintf fmt "  C: ";
       C.print fmt c
+    
+    let of_sign _ = failwith "unimplemented"
+    let of_cong _ = failwith "unimplemented"
+    let to_sign _ = failwith "unimplemented"
+    let to_congruences _ = failwith "unimplemented"
 end

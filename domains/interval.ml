@@ -308,4 +308,8 @@ struct
       true
     | _ -> false
 
+    let of_cong _ = failwith "unimplemented"
+    let of_sign _ = failwith "unimplemented"
+    let to_sign _ = failwith "todo"
+    let to_congruences _ = failwith "todo"
 end
