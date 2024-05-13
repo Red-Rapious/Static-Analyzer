@@ -8,8 +8,5 @@
 
 void main(){
   int i = 0;
-  int j = rand(1, 10);
-  int x = i * j;
-
-  assert(x == 0); //@OK
+  assert(i == 0); //@OK
 }

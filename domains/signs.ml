@@ -106,6 +106,7 @@ module SignsDomain =
      | AST_NOT_EQUAL -> begin match x, y with
                               | Top, Top -> Top, Top
                               | Bot, _ | _, Bot -> Bot, Bot
+                              | Null, Null -> Bot, Bot
                               | _, _ -> x, y
                         end
      | AST_LESS -> begin match x, y with
@@ -115,6 +116,7 @@ module SignsDomain =
                    end
      | AST_LESS_EQUAL -> begin match x, y with
                                | Top, Top -> Top, Top
+                               | Null, Neg | Pos, Neg | Pos, Null-> Bot, Bot
                                | _, _ -> x, y
                          end
      | AST_GREATER -> let (x', y') = compare y x AST_LESS in y', x'
