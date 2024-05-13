@@ -308,8 +308,27 @@ struct
       true
     | _ -> false
 
-    let of_cong _ = failwith "unimplemented"
-    let of_sign _ = failwith "unimplemented"
-    let to_sign _ = failwith "todo"
-    let to_congruences _ = failwith "todo"
+    let to_sign = function
+    | Interval(a, b) when gt_bound a (Finite Z.zero) -> Pos
+    | Interval(a, b) when gt_bound (Finite Z.zero) b -> Neg
+    | Interval(z, z') when z = Finite Z.zero && z' = Finite Z.zero -> Null
+    | Interval(a, b) -> Top
+    | Top -> Top
+    | Bot -> Bot
+
+    let to_congruences = function
+    (* by nature, intervals and congruences represent very different kind of integer set
+       so there's not much information when can extract from this conversion *)
+    | Interval(Finite a, Finite b) when a = b -> Modulo(Z.zero, a) (* constant *)
+    | Interval _ | Top -> Modulo(Z.one, Z.zero) (* top *)
+    | Bot -> Bot
+
+    let of_sign = function
+    | Pos -> Interval(Finite Z.one, PlusInf)
+    | Neg -> Interval(MinusInf, Finite Z.minus_one)
+    | Null -> const Z.zero
+    | Top -> Top
+    | Bot -> Bot
+    
+    let of_congruences _ = failwith "unimplemented"
 end

@@ -267,6 +267,15 @@ treat_examples "interval_loop" "Interval loops" "--domain interval" ""
 treat_examples "sign" "Signs operations" "--domain constants" ""
 treat_examples "sign" "Signs operations" "--domain signs" ""
 treat_examples "congruence" "Congruence operations" "--domain congruences" ""
+
+treat_examples "bool" "Boolean operations" "--domain product" ""
+treat_examples "constant" "Constants operations" "--domain product" ""
+treat_examples "constant_loop" "Constants loops" "--domain product" ""
+treat_examples "interval" "Interval operations" "--domain product" ""
+treat_examples "interval_loop" "Interval loops" "--domain product" ""
+treat_examples "sign" "Signs operations" "--domain product" ""
+treat_examples "congruence" "Congruence operations" "--domain product" ""
+
 echo "</table>"                                   >> $index_html
 echo "</body>"                                    >> $index_html
 echo "</html>"                                    >> $index_html

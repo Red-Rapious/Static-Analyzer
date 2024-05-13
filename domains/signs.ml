@@ -198,8 +198,9 @@ module SignsDomain : Value_domain.VALUE_DOMAIN =
     | Value_domain.Pos -> Pos 
     | Value_domain.Bot -> Bot
     | Value_domain.Top -> Top
+    | Value_domain.Null -> Null
   
-    let of_cong _ = failwith "unimplemented"
+    let of_congruences _ = failwith "unimplemented"
     let to_sign _ = failwith "unimplemented"
     let to_congruences _ = failwith "unimplemented"
 end

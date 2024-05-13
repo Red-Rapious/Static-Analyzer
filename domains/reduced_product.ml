@@ -27,7 +27,17 @@ module ReducedProductDomain : Value_domain.VALUE_DOMAIN =
     (* interval: [a,b] *)
     let rand a b = S.rand a b, I.rand a b, C.rand a b
 
-    let reduction (s, i, c) = (S.meet s (S.of_sign (I.to_sign i)), i, C.meet c (C.of_sign (I.to_sign i)))
+    (* subset inclusion of concretizations *)
+    let subset (xs, xi, xc) (ys, yi, yc) = S.subset xs ys && I.subset xi yi && C.subset xc yc
+
+    (* gathers information from the three domains *)
+    let rec reduction x =
+      let (s, i, c) = match x with
+      | _ -> x
+      in
+      let reduced = (S.meet s (S.of_sign (I.to_sign i)), i, C.meet c (C.of_congruences (I.to_congruences i)))
+      in (*if subset x reduced then reduced else reduction reduced *)
+      reduced
 
     (* unary operation *)
     let unary (s, i, c) op = reduction (S.unary s op, I.unary i op, C.unary c op)
@@ -83,9 +93,6 @@ module ReducedProductDomain : Value_domain.VALUE_DOMAIN =
     (* narrowing *)
     let narrow (xs, xi, xc) (ys, yi, yc) = reduction (S.narrow xs ys, I.narrow xi yi, C.narrow xc yc)
 
-    (* subset inclusion of concretizations *)
-    let subset (xs, xi, xc) (ys, yi, yc) = S.subset xs ys && I.subset xi yi && C.subset xc yc
-
     (* check the emptiness of the concretization *)
     let is_bottom (s, i, c) = S.is_bottom s || I.is_bottom i || C.is_bottom c
 
@@ -99,7 +106,7 @@ module ReducedProductDomain : Value_domain.VALUE_DOMAIN =
       C.print fmt c
     
     let of_sign _ = failwith "unimplemented"
-    let of_cong _ = failwith "unimplemented"
+    let of_congruences _ = failwith "unimplemented"
     let to_sign _ = failwith "unimplemented"
     let to_congruences _ = failwith "unimplemented"
 end

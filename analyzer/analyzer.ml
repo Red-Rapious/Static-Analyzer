@@ -31,7 +31,7 @@ let doit filename =
   begin match !Options.domain with
   | "constants" -> 
     let module I = Iterator.Iterator(Domain(Vars))(Domains.Constant.ConstantDomain) in
-    log "Starting iterator using constant domain...@." ;
+    log "Starting iterator using constants domain...@." ;
     I.iterate cfg
   | "interval" -> 
     let module I = Iterator.Iterator(Domain(Vars))(Domains.Interval.IntervalDomain) in
@@ -39,11 +39,15 @@ let doit filename =
     I.iterate cfg
   | "signs" -> 
     let module I = Iterator.Iterator(Domain(Vars))(Domains.Signs.SignsDomain) in
-    log "Starting iterator using interval domain...@." ;
+    log "Starting iterator using signs domain...@." ;
     I.iterate cfg
   | "congruences" -> 
     let module I = Iterator.Iterator(Domain(Vars))(Domains.Congruences.CongruencesDomain) in
-    log "Starting iterator using interval domain...@." ;
+    log "Starting iterator using congruences domain...@." ;
+    I.iterate cfg
+  | "product" -> 
+    let module I = Iterator.Iterator(Domain(Vars))(Domains.Reduced_product.ReducedProductDomain) in
+    log "Starting iterator using reduced product domain...@." ;
     I.iterate cfg
   | _ -> failwith "The provided domain argument does not exist."
   end ;
