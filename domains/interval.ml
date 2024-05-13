@@ -1,6 +1,7 @@
 open Frontend
-open Value_domain
 open Frontend.Abstract_syntax_tree
+open Congruences
+open Signs
 
 let swap (x, y) = (y, x)
 
@@ -103,7 +104,7 @@ let bound_to_string = function
 | PlusInf -> "+oo"
 
 
-module IntervalDomain : VALUE_DOMAIN = 
+module IntervalDomain = 
 struct 
     (* type of abstract elements *)
     (* an element of type t abstracts a set of integers *)
@@ -309,26 +310,24 @@ struct
     | _ -> false
 
     let to_sign = function
-    | Interval(a, b) when gt_bound a (Finite Z.zero) -> Pos
-    | Interval(a, b) when gt_bound (Finite Z.zero) b -> Neg
-    | Interval(z, z') when z = Finite Z.zero && z' = Finite Z.zero -> Null
-    | Interval(a, b) -> Top
-    | Top -> Top
-    | Bot -> Bot
+    | Interval(a, b) when gt_bound a (Finite Z.zero) -> SignsDomain.Pos
+    | Interval(a, b) when gt_bound (Finite Z.zero) b -> SignsDomain.Neg
+    | Interval(z, z') when z = Finite Z.zero && z' = Finite Z.zero -> SignsDomain.Null
+    | Interval(a, b) -> SignsDomain.Top
+    | Top -> SignsDomain.Top
+    | Bot -> SignsDomain.Bot
 
     let to_congruences = function
     (* by nature, intervals and congruences represent very different kind of integer set
        so there's not much information when can extract from this conversion *)
-    | Interval(Finite a, Finite b) when a = b -> Modulo(Z.zero, a) (* constant *)
+    | Interval(Finite a, Finite b) when a = b -> CongruencesDomain.Modulo(Z.zero, a) (* constant *)
     | Interval _ | Top -> Modulo(Z.one, Z.zero) (* top *)
     | Bot -> Bot
 
     let of_sign = function
-    | Pos -> Interval(Finite Z.one, PlusInf)
+    | SignsDomain.Pos -> Interval(Finite Z.one, PlusInf)
     | Neg -> Interval(MinusInf, Finite Z.minus_one)
     | Null -> const Z.zero
     | Top -> Top
     | Bot -> Bot
-    
-    let of_congruences _ = failwith "unimplemented"
 end

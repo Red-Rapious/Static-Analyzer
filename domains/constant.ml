@@ -167,9 +167,4 @@ struct
       | Bot    -> "⊥"
       | Int(i) -> Z.to_string i
     end
-
-  let of_sign _ = failwith "unimplemented"
-  let of_congruences _ = failwith "unimplemented"
-  let to_sign x = failwith "unimplemented"
-  let to_congruences _ = failwith "unimplemented"
 end

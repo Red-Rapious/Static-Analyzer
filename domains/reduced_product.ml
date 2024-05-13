@@ -1,7 +1,7 @@
 open Frontend
 open Abstract_syntax_tree
 
-module ReducedProductDomain : Value_domain.VALUE_DOMAIN =
+module ReducedProductDomain =
   struct
     module S = Signs.SignsDomain
     module C = Congruences.CongruencesDomain
@@ -35,7 +35,7 @@ module ReducedProductDomain : Value_domain.VALUE_DOMAIN =
       let (s, i, c) = match x with
       | _ -> x
       in
-      let reduced = (S.meet s (S.of_sign (I.to_sign i)), i, C.meet c (C.of_congruences (I.to_congruences i)))
+      let reduced = (S.meet s (I.to_sign i)), i, C.meet c (I.to_congruences i)
       in (*if subset x reduced then reduced else reduction reduced *)
       reduced
 
@@ -104,9 +104,4 @@ module ReducedProductDomain : Value_domain.VALUE_DOMAIN =
       I.print fmt i;
       Format.fprintf fmt "  C: ";
       C.print fmt c
-    
-    let of_sign _ = failwith "unimplemented"
-    let of_congruences _ = failwith "unimplemented"
-    let to_sign _ = failwith "unimplemented"
-    let to_congruences _ = failwith "unimplemented"
 end

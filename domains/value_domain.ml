@@ -12,9 +12,6 @@
 open Frontend
 open Abstract_syntax_tree
 
-type s = Top | Bot | Pos | Neg | Null
-type c = Bot | Modulo of Z.t * Z.t
-
 module type VALUE_DOMAIN =
   sig
 
@@ -90,11 +87,4 @@ module type VALUE_DOMAIN =
 
     (* print abstract element *)
     val print: Format.formatter -> t -> unit
-
-    (* I strugled constructing SignsDomain.t and CongruenceDomain.t, so I used 
-       this ugly workaround to convert Intervals to Signs and Congruences *)
-    val of_sign: s -> t
-    val of_congruences: c -> t
-    val to_sign: t -> s
-    val to_congruences: t -> c
 end

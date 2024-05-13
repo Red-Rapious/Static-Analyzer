@@ -1,7 +1,7 @@
 open Frontend
 open Abstract_syntax_tree
 
-module SignsDomain : Value_domain.VALUE_DOMAIN =
+module SignsDomain =
   struct
 
     (* type of abstract elements *)
@@ -192,15 +192,4 @@ module SignsDomain : Value_domain.VALUE_DOMAIN =
         | Pos -> "+"
         | Neg -> "-"
       end
-
-    let of_sign = function
-    | Value_domain.Neg -> Neg
-    | Value_domain.Pos -> Pos 
-    | Value_domain.Bot -> Bot
-    | Value_domain.Top -> Top
-    | Value_domain.Null -> Null
-  
-    let of_congruences _ = failwith "unimplemented"
-    let to_sign _ = failwith "unimplemented"
-    let to_congruences _ = failwith "unimplemented"
 end
