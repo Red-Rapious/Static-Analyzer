@@ -324,7 +324,7 @@ struct
     | Interval _ | Top -> Modulo(Z.one, Z.zero) (* top *)
     | Bot -> Bot
 
-    let of_sign = function
+    let from_sign = function
     | SignsDomain.Pos -> Interval(Finite Z.one, PlusInf)
     | Neg -> Interval(MinusInf, Finite Z.minus_one)
     | Null -> const Z.zero

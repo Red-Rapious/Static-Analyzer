@@ -106,18 +106,15 @@ module SignsDomain =
      | AST_NOT_EQUAL -> begin match x, y with
                               | Top, Top -> Top, Top
                               | Bot, _ | _, Bot -> Bot, Bot
-                              | Null, Null | Pos, Pos | Neg, Neg -> Bot, Bot
                               | _, _ -> x, y
                         end
      | AST_LESS -> begin match x, y with
                          | Top, Top -> Top, Top
                          | Null, Neg | Pos, Neg | Pos, Null
-                         | Null, Null | Pos, Pos | Neg, Neg -> Bot, Bot
                          | _, _ -> x, y
                    end
      | AST_LESS_EQUAL -> begin match x, y with
                                | Top, Top -> Top, Top
-                               | Null, Neg | Pos, Neg | Pos, Null-> Bot, Bot
                                | _, _ -> x, y
                          end
      | AST_GREATER -> let (x', y') = compare y x AST_LESS in y', x'
@@ -177,7 +174,7 @@ module SignsDomain =
     let subset x y = match x, y with
     | Bot, _ -> true
     | _, Top -> true
-    | _ -> false
+    | _ -> x = y
 
     (* check the emptiness of the concretization *)
     let is_bottom x = x = Bot
