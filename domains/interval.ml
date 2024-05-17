@@ -178,10 +178,15 @@ struct
                           in let mini = min_bound (min_bound b1 b2) (min_bound b3 b4)
                              and maxi = max_bound (max_bound b1 b2) (max_bound b3 b4)
                           in Interval(mini, maxi)
-        | AST_MODULO   -> meet x y
+        | AST_MODULO -> begin
+          match a, b, c, d with
+          | Finite a', Finite b', Finite c', Finite d' when a' = b' && c' = d' ->
+            Interval(Finite (Z.(mod) a' c'), Finite (Z.(mod) a' c'))
+          | _ -> meet x y
+          end
         | AST_DIVIDE -> let naive x y = match x, y with
                         | Top, _ | _, Top -> Top
-                        | Bot, _ | _, Bot  -> Bot 
+                        | Bot, _ | _, Bot  -> Bot
                         | Interval (a, b), Interval (c, d) -> Interval (div_bound a d, div_bound b c)
                         in
                         let leftp = bottomize_if_necessary (Interval (max_bound (Finite Z.zero) a, b))

@@ -12,6 +12,6 @@ void main(){
   int i = 24;
   int j = 42;
   int x = i + j;
-  assert(x == 67); //@KO
   assert(x == 66); //@OK
+  assert(x == 67); //@KO
 }
