@@ -176,7 +176,7 @@ struct
                           and b3 = mul_bound b c
                           and b4 = mul_bound b d
                           in let mini = min_bound (min_bound b1 b2) (min_bound b3 b4)
-                            and maxi = max_bound (max_bound b1 b2) (max_bound b3 b4)
+                             and maxi = max_bound (max_bound b1 b2) (max_bound b3 b4)
                           in Interval(mini, maxi)
         | AST_MODULO   -> meet x y
         | AST_DIVIDE -> let naive x y = match x, y with

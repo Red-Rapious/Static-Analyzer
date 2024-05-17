@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/opt/local/bin/bash
 
 #
 #  Cours "Sémantique et Application à la Vérification de programmes"
@@ -47,7 +47,7 @@ create_file() {
   if [[ ! -e "$file_html" ]]
   then
     cat "scripts/header.html" > $file_html
-    sed -i "s@TITLE@${filename}@" $file_html 
+    gsed -i "s@TITLE@${filename}@" $file_html
     echo "<h1>${filename}</h1>" >> $file_html
     echo "<div class=\"c\">" >> $file_html
     cat $file >> $file_html
@@ -66,7 +66,7 @@ end_file() {
 get_nth_line() {
   line=$1
   file=$2
-  sed "${line}q;d" $file
+  gsed "${line}q;d" $file
 }
 
 treat_file() {
@@ -107,7 +107,7 @@ treat_file() {
   # we search for it in failures
   for nb in `seq 1 $nb_expected`;
   do
-    cmd="echo \"${expected}\" | head -${nb} | tail -1"
+    cmd="echo \"${expected}\" | ghead -${nb} | tail -1"
     line_nb=$(eval "${cmd}")
     echo "${failures}" | grep -q "^${line_nb}$"
     found=$?
@@ -133,7 +133,7 @@ treat_file() {
   # we search for it in expected
   for nb in `seq 1 $nb_failures`;
   do
-    cmd="echo \"${failures}\" | head -${nb} | tail -1"
+    cmd="echo \"${failures}\" | ghead -${nb} | tail -1"
     line_nb=$(eval "${cmd}")
     echo "${expected}" | grep -q "^${line_nb}$"
     found=$?
@@ -190,7 +190,7 @@ treat_examples() {
     echo "<td>" >> $index_html
 		solved=$(($solved+1))
 		echo -ne "\r\t$file $option $fill"
-    opt_replaced=$(echo "${options}" | sed "s/ /_/g")
+    opt_replaced=$(echo "${options}" | gsed "s/ /_/g")
 		log="${result_folder}/${filename}.${opt_replaced}.txt"
     echo "<h2><a href=\"../${log}\">${analyzer} ${options}</a></h2>" >> $file_html
 	 	timeout $max_time $analyzer $options $file > $log 2>&1
@@ -254,20 +254,28 @@ mkdir ${result_folder}
 cat "scripts/header_main.html"                     > $index_html
 echo "<h1>Overview</h1>"                          >> $index_html
 echo "<table>"                                    >> $index_html
-total=$(find $bench -iname "*.c" | wc -l)
+total=$(find "examples" -iname "*.c" | wc -l)
 solved=0
+# constants
 treat_examples "bool" "Boolean operations" "--domain constants" ""
 treat_examples "bool" "Boolean operations" "--domain interval" ""
 treat_examples "constant" "Constants operations" "--domain constants" ""
 treat_examples "constant_loop" "Constants loops" "--domain constants" ""
+
+# interval
 treat_examples "constant" "Constants operations (I)" "--domain interval" ""
 treat_examples "interval" "Interval operations" "--domain interval" ""
 treat_examples "constant_loop" "Constants loops (I)" "--domain interval" ""
 treat_examples "interval_loop" "Interval loops" "--domain interval" ""
 treat_examples "sign" "Signs operations" "--domain constants" ""
+
+# signs
 treat_examples "sign" "Signs operations" "--domain signs" ""
+
+# congruences
 treat_examples "congruence" "Congruence operations" "--domain congruences" ""
 
+# reduced product
 treat_examples "bool" "Boolean operations" "--domain product" ""
 treat_examples "constant" "Constants operations" "--domain product" ""
 treat_examples "constant_loop" "Constants loops" "--domain product" ""

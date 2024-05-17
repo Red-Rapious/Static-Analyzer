@@ -28,7 +28,7 @@ module ReducedProductDomain =
     let rand a b = S.rand a b, I.rand a b, C.rand a b
 
     (* subset inclusion of concretizations *)
-    let subset (xs, xi, xc) (ys, yi, yc) = S.subset xs ys && I.subset xi yi && C.subset xc yc
+    let subset (xs, xi, xc) (ys, yi, yc) = (*S.subset xs ys &&*) I.subset xi yi && C.subset xc yc
 
     (* gathers information from the three domains *)
     let rec reduction x = x
@@ -96,7 +96,7 @@ module ReducedProductDomain =
     let narrow (xs, xi, xc) (ys, yi, yc) = reduction (S.narrow xs ys, I.narrow xi yi, C.narrow xc yc)
 
     (* check the emptiness of the concretization *)
-    let is_bottom (s, i, c) = S.is_bottom s || I.is_bottom i || C.is_bottom c
+    let is_bottom (s, i, c) = (*S.is_bottom s ||*) I.is_bottom i || C.is_bottom c
 
     (* print abstract element *)
     let print fmt (s, i, c) = 

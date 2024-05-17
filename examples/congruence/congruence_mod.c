@@ -12,6 +12,6 @@ void main(){
   int i = 10;
   int j = 3;
   int x = i % j;
-  assert(x == 1); //@OK
   assert(x == 0); //@KO
+  assert(x == 1); //@OK
 }
