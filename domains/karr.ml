@@ -82,8 +82,8 @@ let line_equal c1 c2 =
 module KarrDomain(Vars:VARS) = struct
         type t = constraints 
 
-        let init = 
-                Constraints(Array.make (List.length Vars.support) (Q.zero, Array.make (List.length Vars.support) Q.zero))
+        let init = let c = Array.make (List.length Vars.support) (Q.zero, Array.make (List.length Vars.support) Q.zero) in 
+        for i = 0 to Array.length c do (snd c.(i)).(i) <- Q.one done; Constraints c
 
         let simplify = function
         | Bot -> Bot
@@ -143,14 +143,6 @@ module KarrDomain(Vars:VARS) = struct
 
 
         let subset c1 c2 = is_eq (c2, join c1 c2)
-
-        let assign domain var int_expr = match int_expr with
-                | CFG_int_const x -> let c2 = Array.make (List.length Vars.support) (Q.zero, Array.make (List.length Vars.support) Q.zero) in
-                let c = Array.make (List.length Vars.support) Q.zero in
-                c.(var.var_id) <- Q.one; 
-                c2.(0) <- ((Q.of_bigint x), c);
-                join domain (Constraints c2);
-                | _ -> Bot
         
         let rec has_variable = function 
                 | CFG_int_const _ -> false
@@ -167,5 +159,44 @@ module KarrDomain(Vars:VARS) = struct
                 | CFG_int_binary(AST_PLUS, e1, e2) | CFG_int_binary(AST_MINUS, e1, e2) -> is_affine e1 && is_affine e2
                 | CFG_int_binary(AST_MODULO, _, _) -> false (*Dans le cadre de cette implémentation, les égalités affines modulo un nombre ne sont pas prises en charge *)
                 | CFG_int_binary(_, e1, e2) -> not (has_variable e1 && has_variable e2) && is_affine e1 && is_affine e2
-     
+    
+        let evaluate e = if has_variable e then failwith "This should not have happened";
+                let rec aux = function 
+                | CFG_int_const i -> Some (Q.of_bigint i)
+                | CFG_int_unary(AST_UNARY_PLUS, e) -> aux e
+                | CFG_int_unary(AST_UNARY_MINUS, e) -> begin match aux e with | Some c -> Some(Q.(~-) c) | None -> None end
+                | CFG_int_binary(AST_PLUS, e1, e2) -> begin match aux e1, aux e2 with 
+                | None, _ | _, None -> None
+                | Some c1, Some c2 -> Some (Q.(+) c1 c2)
+                end
+                | CFG_int_binary(AST_MINUS, e1, e2) -> begin match aux e1, aux e2 with 
+                | None, _ | _, None -> None
+                | Some c1, Some c2 -> Some (Q.(-) c1 c2)
+                end
+                | CFG_int_binary(AST_MULTIPLY, e1, e2) -> begin match aux e1, aux e2 with 
+                | None, _ | _, None -> None
+                | Some c1, Some c2 -> Some (Q.( * ) c1 c2)
+                end
+                | CFG_int_binary(AST_DIVIDE, e1, e2) -> begin match aux e1, aux e2 with 
+                | None, _ | _, None -> None
+                | Some c1, Some c2 when Q.(<>) c2 Q.zero -> Some (Q.(+) c1 c2)
+                | _, _ -> None
+                end
+                | _ -> failwith "Pas traité"
+        in aux e
+
+        let assign domain var e = if not (has_variable e) then
+                match evaluate e with
+                | None -> Bot
+                | Some v -> let m = Array.make (List.length Vars.support) (Q.zero, Array.make (List.length Vars.support) Q.zero) in 
+                        let c = Array.make (List.length Vars.support) Q.zero in 
+                        c.(var.var_id) <- Q.one; 
+                        m.(0) <- (v, c);
+                        join domain (Constraints m)
+
+                else 
+                Bot
+                
+
+
 end 
