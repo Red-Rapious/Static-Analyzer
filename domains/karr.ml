@@ -330,5 +330,9 @@ module KarrDomain (Vars : VARS) = struct
         |  v ->  v)
     | _ -> Bot
 
-  let guard domain e = if not (is_affine_bool e) then domain else Bot
+  let guard domain e = if not (is_affine_bool e) then domain else 
+    let c = constraintify e in 
+    if subset c domain then domain else Bot 
+
+
 end
