@@ -287,7 +287,7 @@ module KarrDomain (Vars : VARS) = struct
 
   let rec is_affine_bool = function
     | CFG_bool_const _ -> true
-    | CFG_bool_rand _ -> false
+    | CFG_bool_rand -> false
     | CFG_bool_unary (_, e) -> is_affine_bool e
     | CFG_bool_binary (_, e1, e2) -> is_affine_bool e1 && is_affine_bool e2
     | CFG_compare (AST_EQUAL, e1, e2) -> is_affine e1 && is_affine e2
@@ -334,5 +334,19 @@ module KarrDomain (Vars : VARS) = struct
     let c = constraintify e in 
     if subset c domain then domain else Bot 
 
-
+  let print formatter d = match simplify d with 
+    | Bot -> Format.fprintf formatter "Empty Set\n"
+    | Constraints c -> 
+      let aux index const = function 
+      | [] -> ()
+      | [h] -> Format.fprintf formatter "%s * %s" (Q.to_string const.(index)) h.var_name
+      | h::t -> Format.fprintf formatter "%s" (Q.to_string const.(index)); Format.fprintf formatter " * %s + " h.var_name
+      in
+      for i = 0 to Array.length c - 1  do
+        aux 0 (snd c.(i)) Vars.support;
+        Format.fprintf formatter " = %s" (Q.to_string (fst c.(i)));
+        Format.fprintf formatter "\n"
+      done
+      
+        
 end
