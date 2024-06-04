@@ -17,19 +17,19 @@ let verbose = ref false
 (* string arguments *)
 let file = ref ""
 let cfg_out = ref "cfg.dot"
-let domain = ref ""
+let domain  = ref ""
+let backward = ref false
 
-let args =
-  [
-    ("-v", Set verbose, " Execute the analyzer in verbose/debug mode");
-    ( "--dot-out",
-      Set_string cfg_out,
-      " Print the cfg in this file (default is cfg.dot)" );
-    ( "--domain",
-      Set_string domain,
-      " Select the abstract domain (constants/interval)" );
-  ]
-  |> align
+let args = [
+  "-v", Set verbose,
+    " Execute the analyzer in verbose/debug mode";
+  "--dot-out", Set_string cfg_out,
+    " Print the cfg in this file (default is cfg.dot)";
+  "--domain", Set_string domain,
+    " Select the abstract domain (constants/interval)";
+   "--backward", Set backward,
+    " Use backward analysis instead of default forward."
+] |> align
 
 let usage = "usage: ./analyzer.exe [options] filename.c"
 
