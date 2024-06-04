@@ -55,7 +55,7 @@ functor
     | Some d -> d
 
   let going_up = ref true
-  let rec iter_arc environment arc direction : D.t =
+  let rec iter_arc environment environment2 (func:func) arc direction : D.t =
     let domain = environment_of_node environment arc.arc_src
     in
     if !Options.verbose then begin
@@ -75,7 +75,7 @@ functor
     | CFG_guard expr -> D.guard domain expr
     | CFG_call func -> 
       if !Options.backward then failwith "" 
-      else iterate_function environment func None Forward domain
+      else iterate_function environment environment2 func None Forward domain
     | CFG_assert (expr, extent) -> 
       let true_domain = D.guard domain expr 
       and false_domain = D.guard domain (CFG_bool_unary (AST_NOT, expr))
@@ -84,18 +84,22 @@ functor
       if direction = Forward && not (D.is_bottom false_domain) then begin
         going_up := false;
         if !Options.backward then begin
-          (*Format.printf "%a@ " Errors.pp_err (AssertDetect, ext, expr);*)
-          let failed_envs = ref (NodeMap.add (arc_src arc direction) false_domain NodeMap.empty) in
-          (*ignore (iterate_function (failed_envs, !envs) fct (Some (arc_src arc direction)) false_domain Backward)*)
-          ()
+          Format.printf "%a: %s \"%a\"@." Cfg_printer.pp_pos (fst extent) "Assertion encountered, backward mode activated" Cfg_printer.print_bool_expr expr ;
+          let failed = Hashtbl.create 16 in
+          Hashtbl.add failed (arc_src arc direction) false_domain ;
+          ignore (iterate_function failed environment func (Some (arc_src arc direction)) Backward false_domain)
         end;
-  
+        
         (* TODO: clean error handling *)
-        Format.printf "%a: %s \"%a\"@." Cfg_printer.pp_pos (fst extent) "Assertion failure" Cfg_printer.print_bool_expr expr ;
-        if !Options.verbose then begin
-          Format.printf "The assertion is false when the value is in the following non-bottom domain:\n" ;
-          D.print Format.std_formatter false_domain ; 
-          Format.printf "@."
+        if !going_up then
+          Format.printf "%a: %s \"%a\"@." Cfg_printer.pp_pos (fst extent) "Assertion success using backward analysis" Cfg_printer.print_bool_expr expr
+        else begin
+          Format.printf "%a: %s \"%a\"@." Cfg_printer.pp_pos (fst extent) "Assertion failure" Cfg_printer.print_bool_expr expr ;
+          if !Options.verbose then begin
+            Format.printf "The assertion is false when the value is in the following non-bottom domain:\n" ;
+            D.print Format.std_formatter false_domain ; 
+            Format.printf "@."
+          end
         end
       end else begin
         if !Options.verbose then begin
@@ -111,7 +115,7 @@ functor
   (*
     [environment] maintains a map from nodes to abstract values
   *)
-  and iterate_function environment (func:func) (entry_node:node option) direction entry_domain  =
+  and iterate_function (environment: (node, D.t) Hashtbl.t) (environment2:(node, D.t) Hashtbl.t) (func:func) (entry_node:node option) direction entry_domain  =
     (* TODO: replace node option by node; to do so, change calls using None to calls using func.func_entry *)
     let entry = match entry_node with
     | Some x -> x
@@ -129,7 +133,7 @@ functor
         worklist := NodeSet.remove node !worklist;
 
       let sources = List.filter (fun arc -> Hashtbl.mem environment (arc_src arc direction)) (node_in node direction) in 
-      let sources_domains = List.map (fun arc -> iter_arc environment arc direction) sources in 
+      let sources_domains = List.map (fun arc -> iter_arc environment environment2 func arc direction) sources in 
       let join_domain = List.fold_left D.join D.bottom sources_domains in
       
       (* if the node’s abstract value has changed *)
@@ -160,7 +164,7 @@ functor
 
     let environment = Hashtbl.create 0 in 
     let main_func = List.find (fun f -> f.func_name = "main") cfg.cfg_funcs in
-    iterate_function environment main_func None Forward D.init  |> ignore
+    iterate_function environment (Hashtbl.create 16) main_func None Forward D.init  |> ignore
 
     (*
     let iter_node node: unit =
