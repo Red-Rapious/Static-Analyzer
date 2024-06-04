@@ -86,7 +86,7 @@ let line_equal c1 c2 =
           !r
 
 module KarrDomain (Vars : VARS) = struct
-  (* TODO: Guard, widen, join, print *)
+  (* TODO: Join*)
   type t = constraints
 
   let init =
@@ -295,7 +295,80 @@ module KarrDomain (Vars : VARS) = struct
     | CFG_compare (_, e1, e2) -> false
 
 
-    let join d1 d2 = d1
+    let join d1 d2 = match simplify d1, simplify d2 with
+    | Bot, d | d, Bot -> d
+    | Constraints d1, Constraints d2 ->
+      let c1 = Array.make_matrix (Array.length d1) (Array.length (snd d1.(0)) + 1) Q.zero and
+      c2 = Array.make_matrix (Array.length d2) (Array.length (snd d2.(0)) + 1) Q.zero in
+      for i = 0 to Array.length d1 - 1 do 
+        c1.(i).(-1) <- fst d1.(i);
+        c2.(i).(-1) <- fst d2.(i);
+        for j = 0 to Array.length d1 - 1 do
+          c1.(i).(j) <- (snd d1.(i)).(j);
+          c2.(i).(j) <- (snd d2.(i)).(j);
+        done;
+      done;
+      let r = ref 0 in
+      for s = 0 to Array.length c1 - 1 do 
+        if Q.(=) c1.(!r).(s) Q.one && Q.(=) c2.(!r).(s) Q.one then
+          incr r;
+        if Q.(=) c1.(!r).(s) Q.one && Q.(=) c2.(!r).(s) Q.zero then begin
+          for i = 0 to !r - 2 do
+            c1.(i) <- Array.map2 Q.(+) (Array.map (fun x -> Q.( * ) c2.(i).(s) x) c1.(!r)) c1.(i)
+          done;
+          for j = Array.length c1 - 2 downto !r do
+            c1.(j) <- Array.copy c1.(j+1)
+          done;
+          c1.(Array.length c1 - 1) <- Array.make (Array.length c1.(0)) Q.zero
+        end;
+        if Q.(=) c2.(!r).(s) Q.one && Q.(=) c1.(!r).(s) Q.zero then begin
+          for i = 0 to !r - 2 do
+            c2.(i) <- Array.map2 Q.(+) (Array.map (fun x -> Q.( * ) c1.(i).(s) x) c2.(!r)) c2.(i)
+          done;
+          for j = Array.length c2 - 2 downto !r do
+            c2.(j) <- Array.copy c2.(j+1)
+          done;
+          c2.(Array.length c2 - 1) <- Array.make (Array.length c2.(0)) Q.zero
+        end;
+        if Q.(=) c1.(!r).(s) Q.zero && Q.(=) c2.(!r).(s) Q.zero then begin
+          let t = ref (!r - 1) and tmp = ref true in 
+          while !tmp && !t >= 0 do begin
+            if Q.(=) c1.(!t).(s) c2.(!t).(s) then 
+              decr t 
+            else
+              tmp := false
+            end
+          done;
+          if not !tmp then () 
+          else begin
+            for i = 0 to !t - 1 do begin
+              let coeff = Q.(/) (Q.(-) c1.(i).(s) c2.(i).(s)) (Q.(-) c1.(!t).(s) c2.(!t).(s)) in
+              c1.(i) <- Array.map2 Q.(-) c1.(i) (Array.map (Q.( * ) coeff) c1.(!t));
+              c2.(i) <- Array.map2 Q.(-) c2.(i) (Array.map (Q.( * ) coeff) c2.(!t));
+
+              for j = Array.length c1 - 2 downto !r do
+                c1.(j) <- Array.copy c1.(j+1)
+              done;
+              c1.(Array.length c1 - 1) <- Array.make (Array.length c1.(0)) Q.zero;
+
+              for j = Array.length c2 - 2 downto !r do
+                c2.(j) <- Array.copy c2.(j+1)
+              done;
+              c2.(Array.length c2 - 1) <- Array.make (Array.length c2.(0)) Q.zero
+            end;
+          done;
+        end;
+      end;
+      done;
+      let dom = Array.make (List.length Vars.support) (Q.zero, Array.make (List.length Vars.support) Q.zero) in
+      for i = 0 to Array.length c1 - 1 do
+        let c = Array.make (List.length Vars.support) Q.zero in
+        for j = 0 to Array.length c - 1 do 
+          c.(j) <- c1.(i).(j);
+        done;
+        dom.(i) <- (c1.(i).(-1), c);
+      done;
+      Constraints dom
 
     let widen = join
 
