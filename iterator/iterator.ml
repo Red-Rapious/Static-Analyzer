@@ -56,7 +56,7 @@ functor
 
   let going_up = ref true
   let rec iter_arc environment environment2 (func:func) arc direction : D.t =
-    let domain = environment_of_node environment arc.arc_src
+    let domain = environment_of_node environment (arc_src arc direction)
     in
     if !Options.verbose then begin
       Format.printf "Domain before ";
@@ -69,7 +69,7 @@ functor
     | CFG_skip _ -> domain
     | CFG_assign (var, expr) -> 
       if direction = Forward then D.assign domain var expr
-      else begin 
+      else begin
         failwith "implement backward"
       end
     | CFG_guard expr -> D.guard domain expr
@@ -84,7 +84,7 @@ functor
       if direction = Forward && not (D.is_bottom false_domain) then begin
         going_up := false;
         if !Options.backward then begin
-          Format.printf "%a: %s \"%a\"@." Cfg_printer.pp_pos (fst extent) "Assertion encountered, backward mode activated" Cfg_printer.print_bool_expr expr ;
+          Format.printf "%a: %s \"%a\" - backward mode activated@." Cfg_printer.pp_pos (fst extent) "Assertion encountered:" Cfg_printer.print_bool_expr expr;
           let failed = Hashtbl.create 16 in
           Hashtbl.add failed (arc_src arc direction) false_domain ;
           ignore (iterate_function failed environment func (Some (arc_src arc direction)) Backward false_domain)
