@@ -1,0 +1,83 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[a4paper,margin=2cm]{geometry}
+
+\usepackage{cmap}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[kerning=true]{microtype}
+\usepackage{lmodern}
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{mathtools}
+\usepackage{wrapfig}
+\usepackage{enumitem}
+\usepackage{float}
+
+\usepackage{parskip}
+
+\usepackage{hyperref}
+\usepackage{cleveref}
+
+\makeatletter
+
+\title{\vspace{-5ex} \textbf{Static Analyzer Project}}
+\author{Matthieu Boyer\and Antoine Groudiev}
+\date{\vspace{-1ex}Last updated \today}
+
+\begin{document}
+\maketitle
+
+\section*{Introduction}
+This is the static analyzer project of Antoine Groudiev and Matthieu Boyer, for the class \emph{Semantics and application to verfication}. It implements the base domains, that is the constant, sign, interval, congruence domains, the reduced product between the interval and the congruence domains ; furthermore, support for the Karr’s linear equality analysis and Backward analysis have been added as extensions.
+
+The provided analyzer should pass every single test included with the project. Specialized tests for each domain and feature have been added.
+
+\section{Iterator}
+As recommended, the iterator (in the file \texttt{iterator.ml}) implements a classic worklist algorithm. The Hashtbl \texttt{environment} maintains a map from nodes to abstract values.
+
+\section{Domains}
+\subsection{Constant domain}
+The constant domain abstracts a set of integers as:
+\begin{center}
+    \texttt{type t = | Top | Bot | Int of Z.t}
+\end{center}
+In most cases, operations such as \texttt{widen}, \texttt{meet} and \texttt{join} do not convey much information. Similarly, any non-trivial \texttt{rand} is abstracted as \texttt{Top}.
+
+The functions \texttt{binary} and \texttt{bwd\_binary} are slightly more complicated. For \texttt{binary}, multiplication with \texttt{Int Z.zero} is guaranteed to result in \texttt{Int Z.zero}. Values $\bot$ and $\top$ cases are absorbant. Finally, we can compute the operation if the value of both operands is known; in case of division by zero, the result is $\bot$, which will notably cause future assertion to pass, as seen in the example \texttt{constant/constant\_div\_zero.c}. For \texttt{bwd\_binary}, the cases of $+$, $-$, $\times$ are easy to handle since these operators are invertible. The case of division and modulo is harder, since the special case of zero needs to be extracted.
+
+\subsection{Sign domain}
+We chose the following representation for the sign domain elements:
+\begin{center}
+    \texttt{type t = | Bot | Top | Pos | Neg | Null}
+\end{center}
+A more complicated sign latice could have been chosen, separating for instance positive values into stricly positive, and positive or null.
+
+Pretty much every function is straighforward. Division can zero can still be detected and abstracted as $\bot$, but there is no added difficulty compared to the constant domain.
+
+\subsection{Interval domain}
+To represent an interval, a bound element has been introduced:
+\begin{center}
+    \texttt{type bound = | MinusInf | Finite of Z.t | PlusInf}
+\end{center}
+which can later be used in the definition of an abstract type:
+\begin{center}
+    \texttt{type t  = | Bot | Top | Interval of bound * bound}
+\end{center}
+Firstly, I later realized that I could have abstracted \texttt{Top} as \texttt{Interval (MinusInf, PlusInf)}, which would have reduced the length of the code. Nevertheless, $\top$ is in general fairly easy to handle, so it introduced no fundamental complexity.
+
+Operations on \texttt{bound} have been introduced, to handle infinite cases. Note that in practice, for an analyzer, cases such as $+\infty - (+\infty)$ never happen, because substractions are only called with one left and one right bound.
+
+A function of \texttt{bottomize\_if\_necessary} is used to transform \texttt{Interval} into \texttt{Top} or \texttt{Bot}.
+
+\subsection{Congruence domain}
+
+\subsection{Karr's linear equality}
+
+\section{Backward analysis}
+
+\end{document}
