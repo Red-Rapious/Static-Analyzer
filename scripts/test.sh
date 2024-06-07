@@ -284,6 +284,9 @@ treat_examples "interval_loop" "Interval loops" "--domain product" ""
 treat_examples "sign" "Signs operations" "--domain product" ""
 treat_examples "congruence" "Congruence operations" "--domain product" ""
 
+# karr
+treat_examples "constant" "Constants operations" "--domain karr" ""
+
 echo "</table>"                                   >> $index_html
 echo "</body>"                                    >> $index_html
 echo "</html>"                                    >> $index_html

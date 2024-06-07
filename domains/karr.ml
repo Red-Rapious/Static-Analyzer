@@ -85,8 +85,8 @@ let line_equal c1 c2 =
             done;
           !r
 
-module KarrDomain (Vars : VARS) = struct
-  (* TODO: Join*)
+module KarrDomain (Vars : VARS) : DOMAIN = functor (_:Value_domain.VALUE_DOMAIN) ->
+struct
   type t = constraints
 
   let init =
@@ -135,7 +135,8 @@ module KarrDomain (Vars : VARS) = struct
           done;
           if !r then Constraints res else Bot
 
-  let bottom = Array.make (List.length Vars.support) Bot
+  (* TODO: adapt signature *)
+  let bottom = Bot (*Array.make (List.length Vars.support) Bot*)
   let is_bottom = function t -> is_eq (Bot, simplify t)
 
   let equal c1 c2 =
@@ -420,6 +421,4 @@ module KarrDomain (Vars : VARS) = struct
         Format.fprintf formatter " = %s" (Q.to_string (fst c.(i)));
         Format.fprintf formatter "\n"
       done
-      
-        
 end

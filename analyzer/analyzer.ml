@@ -60,6 +60,12 @@ let doit filename =
       in
       log "Starting iterator using reduced product domain...@.";
       I.iterate cfg
+  | "karr" ->
+      let module I =
+        Iterator.Iterator (Domains.Karr.KarrDomain(Vars)) (Domains.Constant.ConstantDomain)
+      in
+      log "Starting iterator using reduced product domain...@." ;
+      I.iterate cfg
   | _ -> failwith "The provided domain argument does not exist.");
   log "End of static analyzer.@."
 
