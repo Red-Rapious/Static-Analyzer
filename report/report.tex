@@ -71,10 +71,18 @@ which can later be used in the definition of an abstract type:
 Firstly, I later realized that I could have abstracted \texttt{Top} as \texttt{Interval (MinusInf, PlusInf)}, which would have reduced the length of the code. Nevertheless, $\top$ is in general fairly easy to handle, so it introduced no fundamental complexity.
 
 Operations on \texttt{bound} have been introduced, to handle infinite cases. Note that in practice, for an analyzer, cases such as $+\infty - (+\infty)$ never happen, because substractions are only called with one left and one right bound.
+A function \texttt{bottomize\_if\_necessary} is used to transform \texttt{Interval} into \texttt{Bot} when the bounds are inverted.
 
-A function of \texttt{bottomize\_if\_necessary} is used to transform \texttt{Interval} into \texttt{Top} or \texttt{Bot}.
+For \texttt{binary}, only multiplication and division are tricky to handle. The main idea is to enumerate all possible cases and to take the most general one. Similarly, I found \texttt{bwd\_binary} extremly difficult to handle in the case of multiplication. Cases where the interval contains zero need to be taken care of, we have to be careful to round intervals -- otherwise multiple tests do not pass\dots It was not fun to code, and even less to debug.
 
 \subsection{Congruence domain}
+For this domain, a set is either of the form $\varnothing=\bot$ or $a\mathbb{Z}+b$. This is classically represented by:
+\begin{center}
+    \texttt{type t = | Bot | Modulo of Z.t * Z.t}
+\end{center}
+Note that $\top=\mathbb{Z}=1\times\mathbb{Z}+0$, and that $\{b\}=0\times\mathbb{Z}+b$.
+
+Most operations are easy to handle since little information can be deduced. This can be seen, for example, in \texttt{compare}, which results most of the time in $(\bot, \bot)$. Only the \texttt{meet} and \texttt{join} is interesting since one can sometimes use rafinments such as GCD to give a precise abstraction.
 
 \subsection{Karr's linear equality}
 
