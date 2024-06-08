@@ -32,35 +32,19 @@ let swap_rows m i j =
   m.(j) <- tmp
 
 let rref c =
-  print_string "RREEEEEEEF \n";
-  let m = Array.copy c in
-  print_string "Input:\n";
-  for i = 0 to Array.length m - 1 do 
-    print_string ((Q.to_string (fst m.(i))) ^ " = ");
-    Array.iter (fun x -> print_string(Q.to_string x ^ " + ")) (snd m.(i));
-    print_newline ();
-    done;
+  let m = Array.copy c in 
   try
     let lead = ref 0
     and rows = Array.length m
     and cols = Array.length (snd m.(0)) in
     for r = 0 to pred rows do
-      (* print_string "Row: ";
-      print_int r;
-      print_newline (); *)
       if cols <= !lead then raise Exit;
       let i = ref r in
       while Q.( = ) (snd m.(!i)).(!lead) Q.zero do
         incr i;
-        (* print_string "I: ";
-        print_int !i;
-        print_newline (); *)
         if rows = !i then (
           i := r;
           incr lead;
-          (* print_string "Lead: ";
-          print_int !lead;
-          print_newline (); *)
           if cols = !lead then raise Exit)
       done;
 
@@ -79,18 +63,8 @@ let rref c =
       done;
       incr lead
     done;
-    print_string "Output:\n";
-    for i = 0 to Array.length m - 1 do 
-      print_string ((Q.to_string (fst m.(i))) ^ " = ");
-      Array.iter (fun x -> print_string(Q.to_string x ^ " + ")) (snd m.(i));
-      print_newline ();
-      done;
     m
-  with Exit -> print_string "OUT\n"; print_string "Output:\n"; for i = 0 to Array.length m - 1 do 
-    print_string ((Q.to_string (fst m.(i))) ^ " = ");
-    Array.iter (fun x -> print_string(Q.to_string x ^ " + ")) (snd m.(i));
-    print_newline ();
-    done; m
+  with Exit -> m
 
 let line_equal c1 c2 =
   match (c1, c2) with
@@ -122,6 +96,7 @@ functor
   ->
   struct
     type t = constraints
+
     let print formatter d =
       match d with
       | Bot -> Format.fprintf formatter "Empty Set\n"
@@ -142,6 +117,7 @@ functor
             Format.fprintf formatter " = %s" (Q.to_string (fst c.(i)));
             Format.fprintf formatter "\n"
           done
+
     let init =
       let c =
         Array.make (List.length Vars.support)
@@ -153,7 +129,6 @@ functor
       for i = 0 to Array.length c - 1 do
         (snd c.(i)).(i) <- Q.one
       done;
-
       Constraints c
 
     let top =
@@ -174,13 +149,10 @@ functor
           let index = ref (pred (Array.length c)) in
           while !r && !index >= 0 do
             r := Array.for_all (Q.( = ) Q.zero) (snd c.(!index));
-            index := !index - 1;
-            (* print_string "Index: " ;
-            print_int !index;
-            print_newline () *)
+            index := !index - 1
           done;
-          if !index < 0 then begin print_string "TOP\n"; top end
-          else if !index > Array.length (snd c.(!index)) then begin print_string "BOT\n"; Bot end
+          if !index < 0 then top
+          else if !index > Array.length (snd c.(!index)) then Bot
           else
             let res =
               Array.make (List.length Vars.support)
@@ -201,7 +173,7 @@ functor
               then r := false;
               incr index
             done;
-            if !r then Constraints res else begin print_string "BOT\n"; Bot end
+            if !r then Constraints res else Bot
 
     (* TODO: adapt signature *)
     let bottom = Bot (*Array.make (List.length Vars.support) Bot*)
@@ -262,9 +234,8 @@ functor
       | CFG_int_binary (AST_PLUS, e1, e2) | CFG_int_binary (AST_MINUS, e1, e2)
         ->
           is_affine e1 && is_affine e2
-      | CFG_int_binary (AST_MODULO, _, _) ->
-          false
-          (*Dans le cadre de cette implémentation, les égalités affines modulo un nombre ne sont pas prises en charge *)
+      | CFG_int_binary (AST_MODULO, _, _) -> false
+      (*Dans le cadre de cette implémentation, les égalités affines modulo un nombre ne sont pas prises en charge *)
       | CFG_int_binary (AST_MULTIPLY, e1, e2) ->
           (not (has_variable e1 && has_variable e2))
           && is_affine e1 && is_affine e2
@@ -297,20 +268,9 @@ functor
             | _, _ -> None)
         | _ -> failwith "Pas traité"
       in
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-      for i = 0 to Array.length c - 1  do
-        aux 0 (snd c.(i)) Vars.support;
-        Format.fprintf formatter " = %s" (Q.to_string (fst c.(i)));
-        Format.fprintf formatter "\n"
-      done
+      aux e
 
     let bwd_assign _ _ _ _ = failwith "Karr is incompatible with backward mode"
-end
-=======
-=======
->>>>>>> Stashed changes
-      aux e
 
     let rec affinify_int e =
       match e with
@@ -376,7 +336,7 @@ end
                 in
                 d.(i) <-
                   ( Q.( + ) (fst const) (fst d.(i)),
-                    Array.map2 Q.( + ) (snd d.(i)) (snd const) );
+                    Array.map2 Q.( + ) (snd d.(i)) (snd const) )
             done;
             simplify (Constraints d)
         | Some c, Constraints d ->
@@ -548,10 +508,4 @@ end
       else
         let c = constraintify e in
         if subset c domain then domain else Bot
-
-    
   end
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
