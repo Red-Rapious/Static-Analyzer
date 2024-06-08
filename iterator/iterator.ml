@@ -54,8 +54,8 @@ functor
     | None -> D.bottom
     | Some d -> d
 
-  let going_up = ref true
-  let rec iter_arc environment environment2 (func:func) arc direction : D.t =
+  let going_up = ref false
+  let rec iter_arc environment environment2 (func:func) arc node direction : D.t =
     let domain = environment_of_node environment (arc_src arc direction)
     in
     if !Options.verbose then begin
@@ -70,7 +70,18 @@ functor
     | CFG_assign (var, expr) -> 
       if direction = Forward then D.assign domain var expr
       else begin
-        failwith "implement backward"
+        (*failwith "implement backward" ;*)
+        let x = match Hashtbl.find_opt environment2 node with
+        | Some x -> x
+        | None -> D.bottom
+        in
+        let x', value = D.bwd_assign x var expr domain in
+        if D.is_bottom x' then begin
+          going_up := true;
+          Format.printf "Assignment: cannot find a value for %s\n" var.var_name
+        end else
+          Format.printf "Assignment: found the value %s value for %s\n" value var.var_name;
+        x'
       end
     | CFG_guard expr -> D.guard domain expr
     | CFG_call func -> 
@@ -116,24 +127,25 @@ functor
     [environment] maintains a map from nodes to abstract values
   *)
   and iterate_function (environment: (node, D.t) Hashtbl.t) (environment2:(node, D.t) Hashtbl.t) (func:func) (entry_node:node option) direction entry_domain  =
+    Format.printf "iterate_function\n" ;
     (* TODO: replace node option by node; to do so, change calls using None to calls using func.func_entry *)
     let entry = match entry_node with
     | Some x -> x
     | None -> func.func_entry in
     let children = List.map (fun arc -> (arc_dst arc direction)) entry.node_out in
 
-      (* the set of nodes to update *)
-      let worklist = ref (NodeSet.of_list children) in
-      Hashtbl.add environment entry entry_domain;
+    (* the set of nodes to update *)
+    let worklist = ref (NodeSet.of_list children) in
+    Hashtbl.add environment entry entry_domain;
 
-      (* the algorithm is finished when there is no more node in the worklist *)
-      while not (NodeSet.is_empty !worklist) do
-        (* at each step, a node is extracted from the worklist and updated *)
-        let node = NodeSet.choose !worklist in
-        worklist := NodeSet.remove node !worklist;
+    (* the algorithm is finished when there is no more node in the worklist *)
+    while not (NodeSet.is_empty !worklist) do
+      (* at each step, a node is extracted from the worklist and updated *)
+      let node = NodeSet.choose !worklist in
+      worklist := NodeSet.remove node !worklist;
 
       let sources = List.filter (fun arc -> Hashtbl.mem environment (arc_src arc direction)) (node_in node direction) in 
-      let sources_domains = List.map (fun arc -> iter_arc environment environment2 func arc direction) sources in 
+      let sources_domains = List.map (fun arc -> iter_arc environment environment2 func arc node direction) sources in 
       let join_domain = List.fold_left D.join D.bottom sources_domains in
       
       (* if the node’s abstract value has changed *)

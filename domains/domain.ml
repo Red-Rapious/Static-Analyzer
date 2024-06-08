@@ -38,6 +38,9 @@ module type DOMAIN = functor (_:VALUE_DOMAIN) -> (* functor as suggested by the 
     (* assign an integer expression to a variable *)
     val assign: t -> var -> int_expr -> t
 
+    (* given abstract environments x before and r after the assignment, a variable var and an expression expr, bwd_assign x var expr r returns a refinement x' of x such that, after the assignment var = expr, the result is in r *)
+    val bwd_assign: t -> var -> int_expr -> t -> t * string
+
     (* filter environments to keep only those satisfying the boolean expression *)
     val guard: t -> bool_expr -> t
 
@@ -209,4 +212,10 @@ module type DOMAIN = functor (_:VALUE_DOMAIN) -> (* functor as suggested by the 
         ValueDomain.print formatter value ;
         Format.fprintf formatter "\n"
     ) domain
+
+    let bwd_assign x var expr r =
+      if is_bottom r then bottom, ""
+      else 
+        let value = VarMap.find var r in 
+        bwd x expr value, Format.asprintf "%a" ValueDomain.print value
 end

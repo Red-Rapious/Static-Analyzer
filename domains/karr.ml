@@ -421,4 +421,6 @@ struct
         Format.fprintf formatter " = %s" (Q.to_string (fst c.(i)));
         Format.fprintf formatter "\n"
       done
+
+    let bwd_assign _ _ _ _ = failwith "Karr is incompatible with backward mode"
 end
