@@ -90,6 +90,29 @@ Most operations are easy to handle since little information can be deduced. This
 \subsection{Reduced product}
 
 \subsection{Karr's linear equality}
+In this domain, we only check affine assignations or equalities, else we resort to non-deterministic assignment. This domain is not based on a value domain, since we only consider relational constraints between multiple variables (multiple can be only one, this might be seen as fixing the value of a variable).
+We represent the domain using the following type:
+\begin{center}
+	\texttt{type t = | Bot | Constraints of (Q.t * Q.t array) array}
+\end{center}
+where both arrays should be of length $n = \# variables$.
+Indeed, if we have more than $n$ constraints, then, either we can simplify the matrix and multiple constraints are equivalent, or the matrix represents the empty set since we consider a $n$-dimensional space for the values of the variables.
+\texttt{Constraints d} can be seen as a matrix of the coefficients in each affine constraint and a vector of each constant in the affine constraint. For each row $i$, we then have
+\[
+	\sum_{j = 0}^{n - 1} (\texttt{snd } d.(i)).(j) V_{j} = \texttt{fst } d.(i)
+\]
+where $V_{j}$ is the actual value of the $j$-th variable.
+In that case, the null matrix and the null vector are used to represent the whole space, and will be called \texttt{Top}.\\
+To actually compute operations, we use the Row-Echelon Normal Form of the matrix.
+We can compute this form for any matrix of any size, thus, intersection can be done by considering the concatenation of the two arrays, simplifying by gaussian elimination, and taking all the non-empty rows, or returning \texttt{Bot}.
+This however, poses problems in the implementation as, for still unknown reasons, this function is called multiple times on different inputs, and thus returns \texttt{Bot} or \texttt{Top} depending on the situation.
+We implement equality by checking coefficients in the row-echelon normal form and then we can compute the inclusion by considering that $A \subseteq B \Leftrightarrow A \cap B = A$\\
+For the assignation of variables, we simplify the right side of the assignement to $\nu_{k} <- \sum_{i = 0}^{n - 1}\alpha_{i}\nu_{i} + \beta$ where $\nu_{i}$ is the $i$-th variable.
+Then, depending on $\alpha_{k}$ we can substitute in our domain the new value of $\nu_{k}$.\\
+The same thing goes for guarding, where we simplify the condition, and then compute the minimal domain in which it is valid and find if our domain is included in it.\\
+
+The implementation proposed here is not working, for reasons that are behind my comprehension. I have spent hours coding and debugging this, and I still have no clue about what goes wrong\dots
+I would also like to mention that this project was mostly carried by Antoine and that my failure is mine alone.
 
 \section{Backward analysis}
 
