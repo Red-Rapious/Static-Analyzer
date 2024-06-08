@@ -12,8 +12,9 @@ lib/
 *~
 *.dot
 *.svg
-*.pdf
 *.exe
 *.tar.gz
+*.pygtex
+*.pygstyle
 
 results/
