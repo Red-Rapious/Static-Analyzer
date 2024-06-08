@@ -41,6 +41,9 @@ The provided analyzer should pass every single test included with the project. S
 As recommended, the iterator (in the file \texttt{iterator.ml}) implements a classic worklist algorithm. The Hashtbl \texttt{environment} maintains a map from nodes to abstract values.
 
 \section{Domains}
+\subsection{Value Domain to Domain}
+A \texttt{VALUE\_DOMAIN} is transformed into a \texttt{DOMAIN} using the \texttt{Domain} functor in \texttt{domain.ml}. It abstracts a set of mappings from variables to integers, abstracting sets of integers with the given \texttt{VALUE\_DOMAIN}.
+
 \subsection{Constant domain}
 The constant domain abstracts a set of integers as:
 \begin{center}
@@ -83,6 +86,8 @@ For this domain, a set is either of the form $\varnothing=\bot$ or $a\mathbb{Z}+
 Note that $\top=\mathbb{Z}=1\times\mathbb{Z}+0$, and that $\{b\}=0\times\mathbb{Z}+b$.
 
 Most operations are easy to handle since little information can be deduced. This can be seen, for example, in \texttt{compare}, which results most of the time in $(\bot, \bot)$. Only the \texttt{meet} and \texttt{join} is interesting since one can sometimes use rafinments such as GCD to give a precise abstraction.
+
+\subsection{Reduced product}
 
 \subsection{Karr's linear equality}
 
