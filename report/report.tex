@@ -36,7 +36,7 @@
 \section*{Introduction}
 This is the static analyzer project of Antoine Groudiev and Matthieu Boyer, for the class \emph{Semantics and application to verfication}. It implements the base domains, that is the constant, sign, interval, congruence domains, the reduced product between the interval and the congruence domains ; furthermore, support for the Karr’s linear equality analysis and Backward analysis have been added as extensions.
 
-The provided analyzer should pass every single test included with the project. Specialized tests for each domain and feature have been added.
+The provided analyzer should pass every single test included with the project, except for Karr's domain (see \ref{sec:karr}). Specialized tests for each domain and feature have been added.
 
 \section{Iterator}
 As recommended, the iterator (in the file \texttt{iterator.ml}) implements a classic worklist algorithm. The Hashtbl \texttt{environment} maintains a map from nodes to abstract values. The main logic is contained inside \texttt{iterate\_function}, which handles the worklist, and \texttt{iter\_arc}, which applies the appropriate rule of the domain to the visited arc. 
@@ -97,7 +97,10 @@ The reduced product domain maintains in parallel two abstract representations fo
 \end{center}
 Most operations simply apply the respective functions of both domains to each component of the pair. The only interesting cases are the ones of \texttt{widen} and \texttt{narrow}, where a \texttt{reduction} function use information from both domains to obtain a precise abstraction. This is done by implementing in \texttt{IntervalDomain} functions to convert intervals into congruences, and congruences into intervals.
 
+Note that for some unknown reason, it appears that the reduced product domain fails to correctly handle assertions in series: some tests for the congruence domain containing multiple assertions do not pass since the second assertion is not correctly handled. The problem do not occur for individual assertions, that is when re-writing tests using only one assertion at a time. This behavior is difficult to debug, despite numerous hours spent on it, since it does not happen for other domains, but seems to be an iterator problem rather than a domain problem.
+
 \subsection{Karr's linear equality}
+\label{sec:karr}
 In this domain, we only check affine assignations or equalities, else we resort to non-deterministic assignment. This domain is not based on a value domain, since we only consider relational constraints between multiple variables (multiple can be only one, this might be seen as fixing the value of a variable).
 We represent the domain using the following type:
 \begin{center}
@@ -156,6 +159,6 @@ We use the file \texttt{backward\_abs.c} as an example:
 \end{figure}
 The forward analysis fails since in the \texttt{else} branch, \texttt{x} takes values into $[-10, 10]\setminus\{0\}$, which is abstracted by the interval domain as $[-10, 10]$. Therefore, the limitations of our domain do not allow us to detect that $x\neq 0$.
 
-The backward analysis will go up, starting from the assertion, and will identify that the assertions fails when $y=0$. It will then deduce that it means that $x=0$, which is impossible in this branch. Therefore, the backward analysis could not find any trace in which the assertion is false: therefore, the assertions passes.
+The backward analysis will go up, starting from the assertion, and will identify that the assertions fails when $y=0$. It will then deduce that it means that $x=0$, which is impossible in this branch. Therefore, the backward analysis could not find any trace in which the assertion is false: thus, the assertions passes.
 
 \end{document}

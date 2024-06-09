@@ -29,15 +29,14 @@ module ReducedProductDomain =
     let subset (xi, xc) (yi, yc) = I.subset xi yi && C.subset xc yc
 
     (* gathers information from the three domains *)
-    let rec reduction x = x
-      (*let (s, i, c) = match x with
+    let rec reduction x = 
+      let (i, c) = match x with
       (* constants simplification *)
-      | (s, i, C.Modulo(a, b)) when a = Z.zero -> (s, I.meet (I.meet i (I.const b)) (I.from_sign s), C.Modulo (Z.zero, b))
-      (*| (S.Bot, _, _) | (_, I.Bot, _) | (_, _, C.Bot) -> bottom*)
+      | (i, C.Modulo(a, b)) when a = Z.zero -> (I.meet i (I.const b), C.Modulo (Z.zero, b))
       | _ -> x
       in
-      let reduced = (S.meet s (I.to_sign i)), i, C.meet c (I.to_congruences i)
-      in reduced (*if subset x reduced then reduced else reduction reduced*)*)
+      let reduced = (i, C.meet c (I.to_congruences i)) in 
+      if subset x reduced then reduced else reduction reduced
 
     (* unary operation *)
     let unary (i, c) op = reduction (I.unary i op, C.unary c op)

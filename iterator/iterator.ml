@@ -101,7 +101,6 @@ functor
           ignore (iterate_function failed environment func (Some (arc_src arc direction)) Backward false_domain)
         end;
         
-        (* TODO: clean error handling *)
         if !going_up then
           Format.printf "%a: %s \"%a\"@." Cfg_printer.pp_pos (fst extent) "Assertion success using backward analysis" Cfg_printer.print_bool_expr expr
         else begin
@@ -127,8 +126,6 @@ functor
     [environment] maintains a map from nodes to abstract values
   *)
   and iterate_function (environment: (node, D.t) Hashtbl.t) (environment2:(node, D.t) Hashtbl.t) (func:func) (entry_node:node option) direction entry_domain  =
-    Format.printf "iterate_function\n" ;
-    (* TODO: replace node option by node; to do so, change calls using None to calls using func.func_entry *)
     let entry = match entry_node with
     | Some x -> x
     | None -> func.func_entry in
