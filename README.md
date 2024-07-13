@@ -75,9 +75,9 @@ type t = | Bot | Constraints of (Q.t * Q.t array) array
 where both arrays should be of length $n = |\texttt{Vars}|$.
 Indeed, if we have more than $n$ constraints, then, either we can simplify the matrix and multiple constraints are equivalent, or the matrix represents the empty set since we consider an $n$-dimensional space for the values of the variables.
 `Constraints d` can be seen as a matrix of the coefficients in each affine constraint and a vector of each constant in the affine constraint. For each row $i$, we then have
-$$
-    \sum_{j = 0}^{n - 1} (\texttt{snd } d.(i)).(j) V_{j} = \texttt{fst } d.(i)
-$$
+
+$$\sum_{j = 0}^{n - 1} (\texttt{snd } d.(i)).(j) V_{j} = \texttt{fst } d.(i)$$
+
 where $V_{j}$ is the actual value of the $j$-th variable.
 In that case, the null matrix and the null vector are used to represent the whole space, and will be called `Top`.\\
 To actually compute operations, we use the Row-Echelon Normal Form of the matrix.
@@ -86,15 +86,14 @@ This however, poses problems in the implementation as, for still unknown reasons
 We implement equality by checking coefficients in the row-echelon normal form, and then we can compute the inclusion by considering that $A \subseteq B \Leftrightarrow A \cap B = A$.
 
 For the assignation of variables, we simplify the right side of the assignement to
-$$
-    \nu_{k} <- \sum_{i = 0}^{n - 1}\alpha_{i}\nu_{i} + \beta
-$$
+
+$$\nu_{k} <- \sum_{i = 0}^{n - 1}\alpha_{i}\nu_{i} + \beta$$
+
 where $\nu_{i}$ is the $i$-th variable.
 Then, depending on $\alpha_{k}$ we can substitute in our domain the new value of $\nu_{k}$.
 The same thing goes for guarding, where we simplify the condition, and then compute the minimal domain in which it is valid and find if our domain is included in it.
 
-The implementation proposed here is not working, for reasons that are behind my comprehension. I have spent hours coding and debugging this, and I still have no clue about what goes wrong\dots
-I would also like to mention that this project was mostly carried by Antoine and that my failure is mine alone.
+The implementation proposed here is not working, for reasons that are behind my comprehension. I have spent hours coding and debugging this, and I still have no clue about what goes wrong...
 
 ## Backward analysis
 ### Presentation
